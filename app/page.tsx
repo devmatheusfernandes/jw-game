@@ -14,7 +14,9 @@ export default function Home() {
           </p>
           <div className="flex gap-3">
             <Button className="h-10 px-6">Começar a jogar</Button>
-            <Button variant="outline" className="h-10 px-6">Entrar com Google</Button>
+            <Button asChild variant="outline" className="h-10 px-6">
+              <a href="/login">Entrar com Google</a>
+            </Button>
           </div>
         </section>
 

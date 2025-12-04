@@ -1,0 +1,102 @@
+{
+  "collections": {
+    "universal": {
+      "decks": {
+        "path": "decks",
+        "description": "Decks criados por administradores",
+        "fields": {
+          "id": "string",
+          "title": "string",
+          "description": "string",
+          "category": "string",
+          "questionIds": ["string"],
+          "isUniversal": true,
+          "createdAt": "timestamp",
+          "ownerId": null
+        }
+      },
+      "questions": {
+        "path": "questions",
+        "description": "Perguntas universais criadas por administradores",
+        "fields": {
+          "id": "string",
+          "deckId": "string",
+          "prompt": "string",
+          "options": ["string"],
+          "answerIndex": "number",
+          "difficulty": "easy | medium | hard",
+          "isUniversal": true,
+          "createdAt": "timestamp",
+          "ownerId": null
+        }
+      }
+    },
+
+    "userOwned": {
+      "userProfile": {
+        "path": "users/{userId}",
+        "description": "Perfil do usuário autenticado",
+        "fields": {
+          "id": "string",
+          "name": "string",
+          "email": "string",
+          "createdAt": "timestamp",
+          "lastLogin": "timestamp"
+        }
+      },
+
+      "userDecks": {
+        "path": "users/{userId}/decks",
+        "description": "Decks criados pelo usuário",
+        "fields": {
+          "id": "string",
+          "title": "string",
+          "description": "string",
+          "category": "string",
+          "questionIds": ["string"],
+          "isUniversal": false,
+          "ownerId": "userId",
+          "createdAt": "timestamp"
+        }
+      },
+
+      "userQuestions": {
+        "path": "users/{userId}/questions",
+        "description": "Perguntas criadas pelo usuário",
+        "fields": {
+          "id": "string",
+          "deckId": "string",
+          "prompt": "string",
+          "options": ["string"],
+          "answerIndex": "number",
+          "difficulty": "easy | medium | hard",
+          "isUniversal": false,
+          "ownerId": "userId",
+          "createdAt": "timestamp"
+        }
+      }
+    },
+
+    "gameplay": {
+      "gameResults": {
+        "path": "gameResults",
+        "description": "Resultados de partidas dos jogadores",
+        "fields": {
+          "id": "string",
+          "userId": "string",
+          "deckId": "string",
+          "answers": [
+            {
+              "questionId": "string",
+              "correct": "boolean",
+              "timestamp": "timestamp"
+            }
+          ],
+          "score": "number",
+          "startedAt": "timestamp",
+          "finishedAt": "timestamp"
+        }
+      }
+    }
+  }
+}

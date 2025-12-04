@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --------- AUTH ---------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    // --------- UNIVERSAL CONTENT (ADMIN ONLY) ---------
+    match /decks/{deckId} {
+      allow read: if true;              // todo mundo lê
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /questions/{questionId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // --------- USER-OWNED CONTENT ---------
+    // USER DECKS
+    match /users/{userId}/decks/{deckId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update, delete: if isOwner(userId);
+    }
+
+    // USER QUESTIONS
+    match /users/{userId}/questions/{questionId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update, delete: if isOwner(userId);
+    }
+
+    // --------- GAME RESULTS (somente o próprio usuário) ---------
+    match /gameResults/{gameId} {
+      allow create: if isSignedIn();
+      allow read, update, delete: if isSignedIn() && request.auth.uid == resource.data.userId;
+    }
+
+  }
+}

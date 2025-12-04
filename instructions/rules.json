@@ -60,7 +60,8 @@
       "rules": [
         "Server actions devem ficar na pasta da rota.",
         "Nunca exportar ações do domínio para a UI.",
-        "Toda validação deve ser feita com Zod antes do repositório."
+        "Toda validação deve ser feita com Zod antes do repositório.",
+        "Ações de sessão (criar/entrar/fechar) ficam em /session*[route]"
       ]
     },
     "components": {
@@ -81,7 +82,7 @@
       "Nunca usar any.",
       "Preferir unknown + narrow ou safeParse.",
       "Utilizar Zod para validar dados externos.",
-      "Separar types do domínio em src/domain/types."
+      "Separar types do domínio em domain/types."
     ]
   },
 
@@ -115,6 +116,7 @@
     "titles": "Somente usar h1, h2, h3 e classes text-2xl, text-xl, text-lg.",
     "icons": "Usar lucide-react; tamanho padrão 18 ou 20.",
     "cards": "Sempre com shadow-sm + rounded-xl + border.",
-    "dialogs": "Evitar modal para tudo; usar Sheet para mobile."
+    "dialogs": "Evitar modal para tudo; usar Sheet para mobile.",
+    "landing": "Landing com CTAs: Jogar como convidado, Entrar com Google, Criar sala."
   }
 }

@@ -91,8 +91,11 @@ export type Session = {
   deckId: string; // universalDeckId ou userDeckId
   deckType: "universal" | "user";
   hostId: string;
+  hostType: "guest" | "user";
   opened: boolean;
+  visibility?: "public" | "private";
   createdAt: number;
+  expiresAt?: number;
 };
 
 export type SessionUser = {

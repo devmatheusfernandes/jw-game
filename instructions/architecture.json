@@ -1,9 +1,10 @@
 {
   "authentication": {
-    "provider": "google-only",
-    "flow": "Firebase Auth with Google provider",
+    "provider": "google + anonymous",
+    "flow": "Firebase Auth com Google e Anonymous para convidados",
     "rules": [
-      "Todo usuário autenticado pode criar decks e perguntas pessoais",
+      "Usuário autenticado (Google) tem acesso completo às features pessoais",
+      "Convidados (Anonymous) podem criar/entrar em sessões públicas",
       "Somente admins podem criar conteúdo universal"
     ]
   },
@@ -18,7 +19,8 @@
       "userQuestions": "users/{userId}/questions"
     },
     "gameplay": {
-      "gameResults": "gameResults (somente leitura/escrita pelo próprio usuário)"
+      "gameResults": "gameResults (somente leitura/escrita pelo próprio usuário)",
+      "sessions": "sessions com subcoleções users e answers; leitura pública quando opened = true"
     }
   },
 
@@ -132,11 +134,22 @@
           "finishGame(gameId, score)",
           "getHistory(userId)"
         ]
+      },
+      "SessionRepositoryFirebase": {
+        "collection": "sessions",
+        "methods": [
+          "createSession(session)",
+          "updateSession(session)",
+          "closeSession(sessionId)",
+          "addUser(sessionId, user)",
+          "removeUser(sessionId, userId)",
+          "addAnswer(sessionId, answer)"
+        ]
       }
     },
     "firebase": {
-      "auth": "Google-only provider",
-      "firestore": "Universal + userOwned collections",
+      "auth": "Google + Anonymous",
+      "firestore": "Universal + userOwned + gameplay (sessions/gameResults)",
       "adminClaims": "Para permitir escrita em coleções universais"
     }
   },
@@ -146,7 +159,8 @@
     "pages": {
       "public": [
         "/ (home)",
-        "/login"
+        "/login",
+        "/session/[id]"
       ],
       "userAuthenticated": [
         "/play",
@@ -164,7 +178,7 @@
       "uiComponents": "shadcn/ui",
       "customComponents": "List DeckCard, QuestionCard, GameScreen, etc",
       "providers": [
-        "AuthProvider (Google)",
+        "AuthProvider (Google/Anonymous)",
         "ThemeProvider"
       ]
     }

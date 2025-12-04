@@ -48,5 +48,24 @@ service cloud.firestore {
       allow read, update, delete: if isSignedIn() && request.auth.uid == resource.data.userId;
     }
 
+    // --------- SESSIONS (tempo real) ---------
+    match /sessions/{sessionId} {
+      allow read: if resource.data.opened == true || (isSignedIn() && request.auth.uid == resource.data.hostId) || isAdmin();
+      allow create: if isSignedIn() && request.resource.data.hostId == request.auth.uid;
+      allow update: if isSignedIn() && request.auth.uid == resource.data.hostId;
+      allow delete: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.hostId);
+    }
+
+    match /sessions/{sessionId}/users/{uid} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow update, delete: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    match /sessions/{sessionId}/answers/{answerId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId;
+    }
+
   }
 }

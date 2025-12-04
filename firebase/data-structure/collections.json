@@ -97,6 +97,43 @@
           "finishedAt": "timestamp"
         }
       }
+      ,
+      "sessions": {
+        "path": "sessions",
+        "description": "Salas de jogo em tempo real",
+        "fields": {
+          "id": "string",
+          "deckId": "string",
+          "deckType": "universal | user",
+          "hostId": "string",
+          "hostType": "guest | user",
+          "opened": "boolean",
+          "visibility": "public | private",
+          "createdAt": "timestamp",
+          "expiresAt": "timestamp"
+        },
+        "subcollections": {
+          "users": {
+            "path": "sessions/{sessionId}/users",
+            "fields": {
+              "id": "string",
+              "name": "string",
+              "score": "number",
+              "joinedAt": "timestamp"
+            }
+          },
+          "answers": {
+            "path": "sessions/{sessionId}/answers",
+            "fields": {
+              "id": "string",
+              "userId": "string",
+              "questionId": "string",
+              "isCorrect": "boolean",
+              "answeredAt": "timestamp"
+            }
+          }
+        }
+      }
     }
   }
 }

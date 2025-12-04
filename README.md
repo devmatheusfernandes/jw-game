@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+---
 
-First, run the development server:
+# 📘 **Bible Game Quiz — README**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🧩 Sobre o Projeto
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Bible Game Quiz** é um aplicativo focado em **jogos de perguntas bíblicas**, projetado para uso individual e em grupo.
+A proposta é permitir que usuários respondam perguntas baseadas em textos bíblicos e conteúdos cristãos, com a possibilidade de jogar sozinhos ou em partidas **multiplayer em tempo real**.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+O aplicativo inclui uma base de **perguntas e decks universais** criados por administradores, mas também permite que cada usuário crie **suas próprias perguntas e decks personalizados**, que só ele pode editar.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🔥 Funcionalidades
 
-To learn more about Next.js, take a look at the following resources:
+### ✔️ **Para todos os usuários**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+* Login via Google
+* Jogar quizzes
+* Acessar decks universais oficiais
+* Criar perguntas pessoais
+* Criar decks pessoais
+* Jogar sozinho (modo estudo)
+* Participar de sessões multiplayer
+* Acompanhar pontuação em tempo real
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### ✔️ **Para administradores**
 
-## Deploy on Vercel
+* Criar e editar perguntas universais
+* Criar e editar decks universais
+* Gerenciar tópicos
+* Moderação do conteúdo
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🔁 Fluxo de Uso
+
+1. O usuário faz login com Google
+2. Ele escolhe entre:
+
+   * Jogar um deck universal
+   * Jogar um deck pessoal
+   * Criar suas próprias perguntas
+   * Criar seus próprios decks
+3. No multiplayer, o host cria uma sessão
+4. Outros usuários entram via ID
+5. O host inicia e todos respondem simultaneamente
+6. Pontuação é atualizada em tempo real
+7. Ao final, os resultados são exibidos
+
+---
+
+## 🎨 Design e UI
+
+Utiliza:
+
+* **TailwindCSS**
+* **shadcn/ui**
+* Padrões definidos em `styles.json` (tipografia, espaçamento, cores, padrões de UI)
+
+A interface segue uma estética:
+
+* Minimalista
+* Limpa
+* Focada em acessibilidade
+* Rápida em dispositivos mobile
+
+---
+
+## 🚀 Tecnologias
+
+* **Next.js 16** (App Router + Server Components)
+* **Firebase** (Auth, Firestore, Realtime listeners)
+* **Typescript**
+* **TailwindCSS**
+* **shadcn/ui**
+* **Clean Architecture**
+* **Framer Motion** (animações opcionais)
+
+---

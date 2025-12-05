@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { db } from "@/lib/firebase"
 import type { Topic } from "@/types/collections"
-import { listTopics, createTopic } from "@/repositories/topics"
+import { listTopics, createTopic, updateTopicName, deleteTopic } from "@/repositories/topics"
 import { collection, onSnapshot } from "firebase/firestore"
 
 export function useTopics() {
@@ -28,6 +28,16 @@ export function useTopics() {
     return created
   }
 
+  async function update(id: string, name: string) {
+    if (!db) return
+    await updateTopicName(db, id, name)
+  }
+
+  async function remove(id: string) {
+    if (!db) return
+    await deleteTopic(db, id)
+  }
+
   useEffect(() => {
     if (!db) return
     setLoading(true)
@@ -38,5 +48,5 @@ export function useTopics() {
     return () => unsub()
   }, [])
 
-  return { enabled, topics, loading, reload, create }
+  return { enabled, topics, loading, reload, create, update, remove }
 }

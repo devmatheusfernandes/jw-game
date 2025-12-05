@@ -20,7 +20,7 @@ import { getAuth, signOut } from "firebase/auth"
 export default function AdminPage() {
   const { enabled: firebaseReady, decks, createDeck } = useUniversalDecks()
   const { questions, loading: loadingQuestions, createQuestion } = useUniversalQuestions()
-  const { topics, loading: loadingTopics, create: createTopic } = useTopics()
+  const { topics, loading: loadingTopics, create: createTopic, update: updateTopic, remove: removeTopic } = useTopics()
 
   const { userId, userName, isAdmin } = useAuthStatus()
   const router = useRouter()
@@ -58,6 +58,47 @@ export default function AdminPage() {
 
   function addOptionField() {
     setQuestionOptions((prev) => (prev.length >= 6 ? prev : [...prev, ""]))
+  }
+
+  function startEditTopic(id: string, name: string) {
+    setEditingTopicId(id)
+    setEditingTopicName(name)
+  }
+
+  function cancelEditTopic() {
+    setEditingTopicId(null)
+    setEditingTopicName("")
+  }
+
+  async function saveEditTopic() {
+    const name = editingTopicName.trim()
+    if (!nonEmpty(name)) {
+      toast.warning("Informe o nome do tópico")
+      return
+    }
+    const others = topics.filter((t) => t.id !== editingTopicId)
+    if (!uniqueTopicName(name, others)) {
+      toast.warning("Já existe um tópico com esse nome")
+      return
+    }
+    try {
+      if (editingTopicId) {
+        await updateTopic(editingTopicId, name)
+        cancelEditTopic()
+        toast.success("Tópico atualizado")
+      }
+    } catch {
+      toast.error("Erro ao atualizar tópico")
+    }
+  }
+
+  async function handleDeleteTopic(id: string) {
+    try {
+      await removeTopic(id)
+      toast.success("Tópico excluído")
+    } catch {
+      toast.error("Erro ao excluir tópico")
+    }
   }
 
   function removeOptionField() {
@@ -135,6 +176,8 @@ export default function AdminPage() {
   }
 
   const [topicName, setTopicName] = useState("")
+  const [editingTopicId, setEditingTopicId] = useState<string | null>(null)
+  const [editingTopicName, setEditingTopicName] = useState<string>("")
   async function handleCreateTopic() {
     const name = topicName.trim()
     if (!nonEmpty(name)) {
@@ -283,8 +326,25 @@ export default function AdminPage() {
                   <div className="space-y-2 max-h-60 overflow-auto">
                     {loadingTopics && <div className="text-muted-foreground text-sm py-4 text-center">Carregando...</div>}
                     {!loadingTopics && topics.map((t) => (
-                      <div key={t.id} className="bg-background rounded-md px-3 py-2 text-sm border">
-                        {t.name}
+                      <div key={t.id} className="bg-background rounded-md px-3 py-2 text-sm border flex items-center gap-2">
+                        {editingTopicId === t.id ? (
+                          <>
+                            <Input 
+                              value={editingTopicName}
+                              onChange={(e) => setEditingTopicName(e.target.value)}
+                              disabled={!firebaseReady}
+                              className="text-sm flex-1"
+                            />
+                            <Button size="sm" onClick={saveEditTopic} disabled={!firebaseReady}>Salvar</Button>
+                            <Button size="sm" variant="ghost" onClick={cancelEditTopic}>Cancelar</Button>
+                          </>
+                        ) : (
+                          <>
+                            <span className="flex-1">{t.name}</span>
+                            <Button size="sm" variant="outline" onClick={() => startEditTopic(t.id, t.name)} disabled={!firebaseReady}>Editar</Button>
+                            <Button size="sm" variant="destructive" onClick={() => handleDeleteTopic(t.id)} disabled={!firebaseReady}>Excluir</Button>
+                          </>
+                        )}
                       </div>
                     ))}
                     {!loadingTopics && topics.length === 0 && (

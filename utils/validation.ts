@@ -14,6 +14,5 @@ export function validateDeck(title: string, topicId: string, qIds: string[]) {
 export function validateQuestion(title: string, options: string[], answerIndex: number) {
   const cleaned = options.map((o) => o.trim()).filter((o) => o.length > 0)
   const idxValid = !Number.isNaN(answerIndex) && answerIndex >= 0 && answerIndex < cleaned.length
-  return nonEmpty(title) && cleaned.length >= 2 && idxValid
+  return nonEmpty(title) && cleaned.length >= 2 && cleaned.length <= 6 && idxValid
 }
-

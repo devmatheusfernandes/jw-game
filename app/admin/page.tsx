@@ -57,7 +57,20 @@ export default function AdminPage() {
   }
 
   function addOptionField() {
-    setQuestionOptions((prev) => [...prev, ""])
+    setQuestionOptions((prev) => (prev.length >= 6 ? prev : [...prev, ""]))
+  }
+
+  function removeOptionField() {
+    setQuestionOptions((prev) => {
+      if (prev.length <= 2) return prev
+      const next = prev.slice(0, -1)
+      setAnswerIndex((ai) => {
+        const aiNum = Number(ai)
+        const cap = Math.max(0, next.length - 1)
+        return String(Math.min(aiNum, cap))
+      })
+      return next
+    })
   }
 
   async function handleCreateDeck() {
@@ -475,14 +488,25 @@ export default function AdminPage() {
                       className="text-base"
                     />
                   ))}
-                  <Button 
-                    variant="outline" 
-                    onClick={addOptionField} 
-                    disabled={!firebaseReady}
-                    className="w-full h-11"
-                  >
-                    + Adicionar opção
-                  </Button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={addOptionField} 
+                      disabled={!firebaseReady || questionOptions.length >= 6}
+                      className="h-11"
+                    >
+                      + Adicionar opção
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={removeOptionField} 
+                      disabled={!firebaseReady || questionOptions.length <= 2}
+                      className="h-11"
+                    >
+                      − Remover opção
+                    </Button>
+                  </div>
+                  <div className="text-xs text-muted-foreground">Entre 2 e 6 opções</div>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">

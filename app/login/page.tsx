@@ -34,7 +34,7 @@ export default function LoginPage() {
         }
       }
       toast.success("Login realizado")
-      router.push("/")
+      router.push("/admin")
     } catch {
       toast.error("Falha no login")
     }

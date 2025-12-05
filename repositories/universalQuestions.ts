@@ -1,4 +1,4 @@
-import { addDoc, collection, updateDoc, getDocs, query, where } from "firebase/firestore"
+import { addDoc, collection, updateDoc, getDocs, query, where, doc, deleteDoc } from "firebase/firestore"
 import type { Firestore } from "firebase/firestore"
 import type { UniversalQuestion } from "@/types/collections"
 
@@ -21,4 +21,17 @@ export async function listUniversalQuestionsByTopic(db: Firestore, topicId: stri
   const q = query(collection(db, "questions"), where("topicId", "==", topicId))
   const snap = await getDocs(q)
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<UniversalQuestion, "id">) }))
+}
+
+export async function updateUniversalQuestion(
+  db: Firestore,
+  id: string,
+  data: Partial<Pick<UniversalQuestion, "questionTitle" | "topicId" | "level" | "options">>
+): Promise<void> {
+  const now = Date.now()
+  await updateDoc(doc(db, "questions", id), { ...data, updatedAt: now })
+}
+
+export async function deleteUniversalQuestion(db: Firestore, id: string): Promise<void> {
+  await deleteDoc(doc(db, "questions", id))
 }

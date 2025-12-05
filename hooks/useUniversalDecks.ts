@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { db } from "@/lib/firebase"
 import type { UniversalDeck } from "@/types/collections"
-import { createUniversalDeck, listUniversalDecks } from "@/repositories/universalDecks"
+import { createUniversalDeck, listUniversalDecks, updateUniversalDeck, deleteUniversalDeck } from "@/repositories/universalDecks"
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore"
 
 export function useUniversalDecks() {
@@ -28,6 +28,16 @@ export function useUniversalDecks() {
     return created
   }
 
+  async function updateDeck(id: string, data: Partial<Pick<UniversalDeck, "title" | "topicId" | "level" | "questions">>) {
+    if (!db) return
+    await updateUniversalDeck(db, id, data)
+  }
+
+  async function removeDeck(id: string) {
+    if (!db) return
+    await deleteUniversalDeck(db, id)
+  }
+
   useEffect(() => {
     if (!db) return
     setLoading(true)
@@ -39,5 +49,5 @@ export function useUniversalDecks() {
     return () => unsub()
   }, [])
 
-  return { enabled, decks, loading, reload, createDeck }
+  return { enabled, decks, loading, reload, createDeck, updateDeck, removeDeck }
 }

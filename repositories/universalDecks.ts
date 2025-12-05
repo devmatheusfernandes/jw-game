@@ -1,4 +1,4 @@
-import { collection, getDocs, updateDoc, addDoc } from "firebase/firestore"
+import { collection, getDocs, updateDoc, addDoc, doc, deleteDoc } from "firebase/firestore"
 import type { Firestore } from "firebase/firestore"
 import type { UniversalDeck } from "@/types/collections"
 
@@ -22,4 +22,17 @@ export async function createUniversalDeck(
   } as Omit<UniversalDeck, "id">)
   await updateDoc(ref, { id: ref.id })
   return { id: ref.id, title: input.title, topicId: input.topicId, level: input.level, questions: [...input.questions], createdAt: now, updatedAt: now }
+}
+
+export async function updateUniversalDeck(
+  db: Firestore,
+  id: string,
+  data: Partial<Pick<UniversalDeck, "title" | "topicId" | "level" | "questions">>
+): Promise<void> {
+  const now = Date.now()
+  await updateDoc(doc(db, "decks", id), { ...data, updatedAt: now })
+}
+
+export async function deleteUniversalDeck(db: Firestore, id: string): Promise<void> {
+  await deleteDoc(doc(db, "decks", id))
 }

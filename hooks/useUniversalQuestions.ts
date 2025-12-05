@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { db } from "@/lib/firebase"
 import type { UniversalQuestion } from "@/types/collections"
-import { createUniversalQuestion, listUniversalQuestions } from "@/repositories/universalQuestions"
+import { createUniversalQuestion, listUniversalQuestions, updateUniversalQuestion, deleteUniversalQuestion } from "@/repositories/universalQuestions"
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore"
 
 export function useUniversalQuestions() {
@@ -14,6 +14,16 @@ export function useUniversalQuestions() {
   async function createQuestion(input: Omit<UniversalQuestion, "id" | "createdAt" | "updatedAt">) {
     if (!db) return null
     return await createUniversalQuestion(db, input)
+  }
+
+  async function updateQuestion(id: string, data: Partial<Pick<UniversalQuestion, "questionTitle" | "topicId" | "level" | "options">>) {
+    if (!db) return
+    await updateUniversalQuestion(db, id, data)
+  }
+
+  async function removeQuestion(id: string) {
+    if (!db) return
+    await deleteUniversalQuestion(db, id)
   }
   async function reload() {
     if (!db) return
@@ -37,5 +47,5 @@ export function useUniversalQuestions() {
     return () => unsub()
   }, [])
 
-  return { enabled, questions, loading, reload, createQuestion }
+  return { enabled, questions, loading, reload, createQuestion, updateQuestion, removeQuestion }
 }

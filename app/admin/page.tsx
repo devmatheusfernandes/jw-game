@@ -18,8 +18,8 @@ import { useRouter } from "next/navigation"
 import { getAuth, signOut } from "firebase/auth"
 
 export default function AdminPage() {
-  const { enabled: firebaseReady, decks, createDeck } = useUniversalDecks()
-  const { questions, loading: loadingQuestions, createQuestion } = useUniversalQuestions()
+  const { enabled: firebaseReady, decks, createDeck, updateDeck, removeDeck } = useUniversalDecks()
+  const { questions, loading: loadingQuestions, createQuestion, updateQuestion, removeQuestion } = useUniversalQuestions()
   const { topics, loading: loadingTopics, create: createTopic, update: updateTopic, remove: removeTopic } = useTopics()
 
   const { userId, userName, isAdmin } = useAuthStatus()
@@ -36,7 +36,7 @@ export default function AdminPage() {
     }
   }
 
-  const [activeTab, setActiveTab] = useState<"topic" | "deck" | "question">("topic")
+  const [activeTab, setActiveTab] = useState<"topic" | "deck" | "question" | "decksList" | "questionsList">("topic")
 
   const [deckTitle, setDeckTitle] = useState("")
   const [deckTopicId, setDeckTopicId] = useState("")
@@ -176,6 +176,18 @@ export default function AdminPage() {
   }
 
   const [topicName, setTopicName] = useState("")
+  const [editingDeckId, setEditingDeckId] = useState<string | null>(null)
+  const [editingDeckTitle, setEditingDeckTitle] = useState<string>("")
+  const [editingDeckTopicId, setEditingDeckTopicId] = useState<string>("")
+  const [editingDeckLevel, setEditingDeckLevel] = useState<UniversalDeck["level"]>("easy")
+  const [editingDeckSelectedQuestions, setEditingDeckSelectedQuestions] = useState<string[]>([])
+
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null)
+  const [editingQuestionTitle, setEditingQuestionTitle] = useState<string>("")
+  const [editingQuestionTopicId, setEditingQuestionTopicId] = useState<string>("")
+  const [editingQuestionLevel, setEditingQuestionLevel] = useState<UniversalQuestion["level"]>("easy")
+  const [editingQuestionOptions, setEditingQuestionOptions] = useState<string[]>(["", "", "", ""]) 
+  const [editingAnswerIndex, setEditingAnswerIndex] = useState<string>("0")
   const [editingTopicId, setEditingTopicId] = useState<string | null>(null)
   const [editingTopicName, setEditingTopicName] = useState<string>("")
   async function handleCreateTopic() {
@@ -196,6 +208,91 @@ export default function AdminPage() {
       }
     } catch {
       toast.error("Erro ao criar tópico")
+    }
+  }
+
+  function startEditDeck(d: UniversalDeck) {
+    setEditingDeckId(d.id)
+    setEditingDeckTitle(d.title)
+    setEditingDeckTopicId(d.topicId)
+    setEditingDeckLevel(d.level)
+    setEditingDeckSelectedQuestions(d.questions ?? [])
+  }
+  function cancelEditDeck() {
+    setEditingDeckId(null)
+    setEditingDeckTitle("")
+    setEditingDeckTopicId("")
+    setEditingDeckLevel("easy")
+    setEditingDeckSelectedQuestions([])
+  }
+  async function saveEditDeck() {
+    const title = editingDeckTitle.trim()
+    const topicId = editingDeckTopicId.trim()
+    if (!validateDeck(title, topicId, editingDeckSelectedQuestions)) {
+      toast.warning("Preencha título e tópico")
+      return
+    }
+    try {
+      if (editingDeckId) {
+        await updateDeck(editingDeckId, { title, topicId, level: editingDeckLevel, questions: editingDeckSelectedQuestions })
+        cancelEditDeck()
+        toast.success("Deck atualizado")
+      }
+    } catch {
+      toast.error("Erro ao atualizar deck")
+    }
+  }
+  async function handleDeleteDeck(id: string) {
+    try {
+      await removeDeck(id)
+      toast.success("Deck excluído")
+    } catch {
+      toast.error("Erro ao excluir deck")
+    }
+  }
+
+  function startEditQuestion(q: UniversalQuestion) {
+    setEditingQuestionId(q.id)
+    setEditingQuestionTitle(q.questionTitle)
+    setEditingQuestionTopicId(q.topicId)
+    setEditingQuestionLevel(q.level)
+    setEditingQuestionOptions(q.options.map((o) => o.option))
+    setEditingAnswerIndex(String(Math.max(0, q.options.findIndex((o) => o.isCorrect))))
+  }
+  function cancelEditQuestion() {
+    setEditingQuestionId(null)
+    setEditingQuestionTitle("")
+    setEditingQuestionTopicId("")
+    setEditingQuestionLevel("easy")
+    setEditingQuestionOptions(["", "", "", ""]) 
+    setEditingAnswerIndex("0")
+  }
+  async function saveEditQuestion() {
+    const title = editingQuestionTitle.trim()
+    const topicId = editingQuestionTopicId.trim()
+    const cleanedOptions = editingQuestionOptions.map((o) => o.trim()).filter((o) => o.length > 0)
+    const ansIndexNum = Number(editingAnswerIndex)
+    if (!validateQuestion(title, editingQuestionOptions, ansIndexNum)) {
+      toast.warning("Respostas inválidas")
+      return
+    }
+    try {
+      if (editingQuestionId) {
+        const options: UniversalQuestion["options"] = cleanedOptions.map((opt, i) => ({ id: crypto.randomUUID(), option: opt, isCorrect: i === ansIndexNum }))
+        await updateQuestion(editingQuestionId, { questionTitle: title, topicId, level: editingQuestionLevel, options })
+        cancelEditQuestion()
+        toast.success("Pergunta atualizada")
+      }
+    } catch {
+      toast.error("Erro ao atualizar pergunta")
+    }
+  }
+  async function handleDeleteQuestion(id: string) {
+    try {
+      await removeQuestion(id)
+      toast.success("Pergunta excluída")
+    } catch {
+      toast.error("Erro ao excluir pergunta")
     }
   }
 
@@ -295,11 +392,25 @@ export default function AdminPage() {
             🎴 Decks
           </Button>
           <Button
+            variant={activeTab === "decksList" ? "default" : "ghost"}
+            onClick={() => setActiveTab("decksList")}
+            className="whitespace-nowrap"
+          >
+            📃 Lista de Decks
+          </Button>
+          <Button
             variant={activeTab === "question" ? "default" : "ghost"}
             onClick={() => setActiveTab("question")}
             className="whitespace-nowrap"
           >
             ❓ Perguntas
+          </Button>
+          <Button
+            variant={activeTab === "questionsList" ? "default" : "ghost"}
+            onClick={() => setActiveTab("questionsList")}
+            className="whitespace-nowrap"
+          >
+            📃 Lista de Perguntas
           </Button>
         </div>
 
@@ -484,6 +595,103 @@ export default function AdminPage() {
           </div>
         )}
 
+        {activeTab === "decksList" && (
+          <div className="space-y-6">
+            <Card className="shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">Lista de Decks Universais</CardTitle>
+                <CardDescription>Editar ou excluir decks existentes</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3">
+                  {decks.map((d) => (
+                    <div key={d.id} className="rounded-lg border p-4 bg-gradient-to-br from-background to-muted/30">
+                      {editingDeckId === d.id ? (
+                        <div className="space-y-3">
+                          <Input value={editingDeckTitle} onChange={(e) => setEditingDeckTitle(e.target.value)} disabled={!firebaseReady} className="text-base" />
+                          <Select value={editingDeckTopicId} onValueChange={setEditingDeckTopicId}>
+                            <SelectTrigger className="h-11" disabled={!firebaseReady || loadingTopics}>
+                              <SelectValue placeholder={loadingTopics ? "Carregando..." : "Selecione o tópico"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {topics.map((t) => (
+                                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select value={editingDeckLevel} onValueChange={(v) => setEditingDeckLevel(v as UniversalDeck["level"]) }>
+                            <SelectTrigger className="h-11">
+                              <SelectValue placeholder="Nível de dificuldade" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="easy">🟢 Fácil</SelectItem>
+                              <SelectItem value="medium">🟡 Média</SelectItem>
+                              <SelectItem value="hard">🟠 Difícil</SelectItem>
+                              <SelectItem value="very_hard">🔴 Muito difícil</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <div className="border rounded-lg bg-muted/30 p-4">
+                            <div className="text-sm font-medium mb-3 flex items-center justify-between">
+                              <span>Perguntas do deck</span>
+                              <span className="text-xs text-muted-foreground">{editingDeckSelectedQuestions.length} de {questions.length}</span>
+                            </div>
+                            <div className="space-y-2 max-h-80 overflow-auto">
+                              {loadingQuestions && <div className="text-muted-foreground text-sm py-4 text-center">Carregando...</div>}
+                              {!loadingQuestions && questions.map((q) => (
+                                <label key={q.id} className="flex items-start gap-3 p-3 rounded-md hover:bg-background/80 cursor-pointer border bg-background transition-colors">
+                                  <input
+                                    type="checkbox"
+                                    className="mt-1 size-4 shrink-0"
+                                    checked={editingDeckSelectedQuestions.includes(q.id)}
+                                    onChange={(e) => {
+                                      const checked = e.target.checked
+                                      setEditingDeckSelectedQuestions((prev) => {
+                                        if (checked) return [...prev, q.id]
+                                        return prev.filter((id) => id !== q.id)
+                                      })
+                                    }}
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium line-clamp-2">{q.questionTitle}</div>
+                                    <div className="text-xs text-muted-foreground mt-1">Nível: {q.level}</div>
+                                  </div>
+                                </label>
+                              ))}
+                              {!loadingQuestions && questions.length === 0 && (
+                                <div className="text-muted-foreground text-sm py-8 text-center">Nenhuma pergunta disponível</div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button onClick={saveEditDeck} disabled={!firebaseReady}>Salvar</Button>
+                            <Button variant="ghost" onClick={cancelEditDeck}>Cancelar</Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="font-semibold text-base">{d.title}</div>
+                          <div className="text-sm text-muted-foreground">Tópico: {d.topicId}</div>
+                          <div className="flex items-center gap-4 mt-2 text-xs">
+                            <span className="px-2 py-1 rounded-full bg-primary/10 text-primary">{d.level}</span>
+                            <span className="text-muted-foreground">{d.questions?.length ?? 0} perguntas</span>
+                          </div>
+                          <div className="flex gap-2 mt-3">
+                            <Button size="sm" variant="outline" onClick={() => startEditDeck(d)} disabled={!firebaseReady}>Editar</Button>
+                            <Button size="sm" variant="destructive" onClick={() => handleDeleteDeck(d.id)} disabled={!firebaseReady}>Excluir</Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {decks.length === 0 && (
+                    <div className="text-muted-foreground py-12 text-center">Nenhum deck encontrado</div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {activeTab === "question" && (
           <div className="space-y-6">
             <Card className="shadow-sm">
@@ -604,6 +812,128 @@ export default function AdminPage() {
                   Criar pergunta
                 </Button>
               </CardFooter>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === "questionsList" && (
+          <div className="space-y-6">
+            <Card className="shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">Lista de Perguntas Universais</CardTitle>
+                <CardDescription>Editar ou excluir perguntas existentes</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3">
+                  {questions.map((q) => (
+                    <div key={q.id} className="rounded-lg border p-4 bg-gradient-to-br from-background to-muted/30">
+                      {editingQuestionId === q.id ? (
+                        <div className="space-y-3">
+                          <Input value={editingQuestionTitle} onChange={(e) => setEditingQuestionTitle(e.target.value)} disabled={!firebaseReady} className="text-base" />
+                          <Select value={editingQuestionTopicId} onValueChange={setEditingQuestionTopicId}>
+                            <SelectTrigger className="h-11" disabled={!firebaseReady || loadingTopics}>
+                              <SelectValue placeholder={loadingTopics ? "Carregando..." : "Selecione o tópico"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {topics.map((t) => (
+                                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select value={editingQuestionLevel} onValueChange={(v) => setEditingQuestionLevel(v as UniversalQuestion["level"]) }>
+                            <SelectTrigger className="h-11">
+                              <SelectValue placeholder="Dificuldade" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="easy">🟢 Fácil</SelectItem>
+                              <SelectItem value="medium">🟡 Média</SelectItem>
+                              <SelectItem value="hard">🟠 Difícil</SelectItem>
+                              <SelectItem value="very_hard">🔴 Muito difícil</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <div className="space-y-3">
+                            <div className="text-sm font-medium">Opções de resposta</div>
+                            {editingQuestionOptions.map((opt, i) => (
+                              <Input
+                                key={i}
+                                placeholder={`Opção ${i + 1}`}
+                                value={opt}
+                                onChange={(e) => setEditingQuestionOptions((prev) => prev.map((v, idx) => (idx === i ? e.target.value : v)))}
+                                disabled={!firebaseReady}
+                                className="text-base"
+                              />
+                            ))}
+                            <div className="grid grid-cols-2 gap-2">
+                              <Button 
+                                variant="outline" 
+                                onClick={() => setEditingQuestionOptions((prev) => (prev.length >= 6 ? prev : [...prev, ""]))} 
+                                disabled={!firebaseReady || editingQuestionOptions.length >= 6}
+                                className="h-11"
+                              >
+                                + Adicionar opção
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                onClick={() => setEditingQuestionOptions((prev) => (prev.length <= 2 ? prev : prev.slice(0, -1)))} 
+                                disabled={!firebaseReady || editingQuestionOptions.length <= 2}
+                                className="h-11"
+                              >
+                                − Remover opção
+                              </Button>
+                            </div>
+                            <div className="text-xs text-muted-foreground">Entre 2 e 6 opções</div>
+                          </div>
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <Select value={editingAnswerIndex} onValueChange={setEditingAnswerIndex}>
+                              <SelectTrigger className="h-11">
+                                <SelectValue placeholder="Resposta correta" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {editingQuestionOptions.map((_, i) => (
+                                  <SelectItem key={i} value={String(i)}>
+                                    Opção {i + 1}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Select value={editingQuestionLevel} onValueChange={(v) => setEditingQuestionLevel(v as UniversalQuestion["level"]) }>
+                              <SelectTrigger className="h-11">
+                                <SelectValue placeholder="Dificuldade" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="easy">🟢 Fácil</SelectItem>
+                                <SelectItem value="medium">🟡 Média</SelectItem>
+                                <SelectItem value="hard">🟠 Difícil</SelectItem>
+                                <SelectItem value="very_hard">🔴 Muito difícil</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button onClick={saveEditQuestion} disabled={!firebaseReady}>Salvar</Button>
+                            <Button variant="ghost" onClick={cancelEditQuestion}>Cancelar</Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="font-semibold text-base">{q.questionTitle}</div>
+                          <div className="text-sm text-muted-foreground">Tópico: {q.topicId}</div>
+                          <div className="flex items-center gap-4 mt-2 text-xs">
+                            <span className="px-2 py-1 rounded-full bg-primary/10 text-primary">{q.level}</span>
+                            <span className="text-muted-foreground">{q.options?.length ?? 0} opções</span>
+                          </div>
+                          <div className="flex gap-2 mt-3">
+                            <Button size="sm" variant="outline" onClick={() => startEditQuestion(q)} disabled={!firebaseReady}>Editar</Button>
+                            <Button size="sm" variant="destructive" onClick={() => handleDeleteQuestion(q.id)} disabled={!firebaseReady}>Excluir</Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {questions.length === 0 && (
+                    <div className="text-muted-foreground py-12 text-center">Nenhuma pergunta encontrada</div>
+                  )}
+                </div>
+              </CardContent>
             </Card>
           </div>
         )}

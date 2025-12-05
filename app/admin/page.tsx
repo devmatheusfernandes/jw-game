@@ -308,9 +308,9 @@ export default function AdminPage() {
               <p className="text-xs md:text-sm text-muted-foreground mt-0.5">Gerenciar conteúdo do jogo</p>
             </div>
             <div className="flex items-center gap-2">
-              <div className={`px-2 py-1 rounded-full text-xs md:text-sm ${isAdmin ? 'bg-green-500/10 text-green-700 dark:text-green-400' : 'bg-muted text-muted-foreground'}`}>
-                {isAdmin ? "Admin" : "Usuário"}
-              </div>
+              <Alert className={`${isAdmin ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30' : 'border-muted bg-muted/50'} px-2 py-1 text-xs md:text-sm`}>
+                <AlertTitle>{isAdmin ? "Admin" : "Usuário"}</AlertTitle>
+              </Alert>
               {userId && (
                 <Button 
                   variant="outline" 

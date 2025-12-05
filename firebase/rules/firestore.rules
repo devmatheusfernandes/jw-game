@@ -13,21 +13,71 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && request.auth.token.admin == true;
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.IsAdmin == true;
+    }
+
+    function validLevel(level) {
+      return level in ['easy', 'medium', 'hard', 'very_hard'];
+    }
+
+    function nonEmptyString(s) {
+      return (s is string) && (s != "");
+    }
+
+    function topicExists(topicId) {
+      return exists(/databases/$(database)/documents/topics/$(topicId));
+    }
+
+    function hasAtLeastOneQuestion(qs) {
+      return (qs is list) && (qs.size() >= 1);
+    }
+
+    function firstQuestionExists(qs) {
+      return hasAtLeastOneQuestion(qs) && exists(/databases/$(database)/documents/questions/$(qs[0]));
     }
 
     // --------- UNIVERSAL CONTENT (ADMIN ONLY) ---------
-    match /decks/{deckId} {
-      allow read: if true;              // todo mundo lê
-      allow create, update, delete: if isAdmin();
+    match /topics/{topicId} {
+      allow read: if true;
+      allow create: if isAdmin() && nonEmptyString(request.resource.data.name);
+      allow update, delete: if isAdmin();
     }
 
     match /questions/{questionId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow create: if isAdmin() &&
+        topicExists(request.resource.data.topicId) &&
+        nonEmptyString(request.resource.data.questionTitle) &&
+        (request.resource.data.options is list) &&
+        (request.resource.data.options.size() >= 2) &&
+        validLevel(request.resource.data.level) &&
+        (request.resource.data.questionType == 'multiple_choice');
+      allow update, delete: if isAdmin();
+    }
+
+    match /decks/{deckId} {
+      allow read: if true;
+      allow create: if isAdmin() &&
+        nonEmptyString(request.resource.data.title) &&
+        topicExists(request.resource.data.topicId) &&
+        validLevel(request.resource.data.level) &&
+        firstQuestionExists(request.resource.data.questions);
+      allow update, delete: if isAdmin();
     }
 
     // --------- USER-OWNED CONTENT ---------
+    // USER PROFILE DOC
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) &&
+        request.resource.data.keys().hasOnly(['id','IsAdmin']) &&
+        request.resource.data.id == userId &&
+        request.resource.data.IsAdmin == false;
+      allow update, delete: if isAdmin();
+    }
+
     // USER DECKS
     match /users/{userId}/decks/{deckId} {
       allow read: if isOwner(userId);

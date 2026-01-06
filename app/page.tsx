@@ -1,65 +1,243 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { GameMode } from "@/types";
+import { cn } from "@/lib/utils";
+import { Users, Play, Clock, CheckCircle } from "lucide-react";
 
 export default function Home() {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'create' | 'join'>('join');
+  const [loading, setLoading] = useState(false);
+
+  // Join Form State
+  const [joinCode, setJoinCode] = useState("");
+  const [joinName, setJoinName] = useState("");
+
+  // Create Form State
+  const [hostName, setHostName] = useState("");
+  const [gameMode, setGameMode] = useState<GameMode>('time');
+  const [timeLimit, setTimeLimit] = useState(30);
+
+  const handleJoin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/room/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: joinCode, playerName: joinName }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Erro ao entrar na sala");
+        return;
+      }
+
+      localStorage.setItem("jw-game-player-id", data.playerId);
+      localStorage.setItem("jw-game-player-name", joinName);
+      router.push(`/room/${data.room.code}`);
+    } catch (error) {
+      console.error(error);
+      alert("Erro de conexão");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/room/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          hostName,
+          settings: {
+            mode: gameMode,
+            timeLimitPerQuestion: timeLimit,
+            showResultsAfterQuestion: true
+          }
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Erro ao criar sala");
+        return;
+      }
+
+      localStorage.setItem("jw-game-player-id", data.hostId);
+      localStorage.setItem("jw-game-player-name", hostName);
+      router.push(`/room/${data.roomCode}`);
+    } catch (error) {
+      console.error(error);
+      alert("Erro de conexão");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white dark:from-zinc-900 dark:to-zinc-950 p-4">
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold tracking-tight text-blue-600 dark:text-blue-400">JW Game</h1>
+          <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+            Quiz Bíblico em Tempo Real
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
+          <div className="flex border-b border-zinc-200 dark:border-zinc-800">
+            <button
+              onClick={() => setActiveTab('join')}
+              className={cn(
+                "flex-1 py-4 text-sm font-medium transition-colors",
+                activeTab === 'join' 
+                  ? "bg-blue-50/50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400" 
+                  : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+              )}
+            >
+              Entrar na Sala
+            </button>
+            <button
+              onClick={() => setActiveTab('create')}
+              className={cn(
+                "flex-1 py-4 text-sm font-medium transition-colors",
+                activeTab === 'create' 
+                  ? "bg-blue-50/50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400" 
+                  : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+              )}
+            >
+              Criar Sala
+            </button>
+          </div>
+
+          <div className="p-6">
+            {activeTab === 'join' ? (
+              <form onSubmit={handleJoin} className="space-y-4">
+                <div>
+                  <label htmlFor="joinName" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Seu Nome</label>
+                  <input
+                    id="joinName"
+                    type="text"
+                    required
+                    value={joinName}
+                    onChange={(e) => setJoinName(e.target.value)}
+                    className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
+                    placeholder="Ex: Matheus"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="code" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Código da Sala</label>
+                  <input
+                    id="code"
+                    type="text"
+                    required
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value)}
+                    className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
+                    placeholder="Ex: 12345"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex justify-center items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                >
+                  {loading ? "Entrando..." : (
+                    <>
+                      <Play className="w-4 h-4" /> Entrar
+                    </>
+                  )}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleCreate} className="space-y-4">
+                <div>
+                  <label htmlFor="hostName" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Seu Nome</label>
+                  <input
+                    id="hostName"
+                    type="text"
+                    required
+                    value={hostName}
+                    onChange={(e) => setHostName(e.target.value)}
+                    className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
+                    placeholder="Ex: Matheus"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Modo de Jogo</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setGameMode('time')}
+                      className={cn(
+                        "flex flex-col items-center gap-2 p-3 rounded-lg border text-sm transition-all",
+                        gameMode === 'time'
+                          ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                          : "border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                      )}
+                    >
+                      <Clock className="w-5 h-5" />
+                      <span>Com Tempo</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGameMode('all_answered')}
+                      className={cn(
+                        "flex flex-col items-center gap-2 p-3 rounded-lg border text-sm transition-all",
+                        gameMode === 'all_answered'
+                          ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                          : "border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                      )}
+                    >
+                      <CheckCircle className="w-5 h-5" />
+                      <span>Todos Responderem</span>
+                    </button>
+                  </div>
+                </div>
+
+                {gameMode === 'time' && (
+                  <div>
+                    <label htmlFor="timeLimit" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Tempo por Pergunta (segundos)</label>
+                    <input
+                      id="timeLimit"
+                      type="number"
+                      min="5"
+                      max="300"
+                      value={timeLimit}
+                      onChange={(e) => setTimeLimit(Number(e.target.value))}
+                      className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
+                    />
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex justify-center items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                >
+                  {loading ? "Criando..." : (
+                    <>
+                      <Users className="w-4 h-4" /> Criar Sala
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+          </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }

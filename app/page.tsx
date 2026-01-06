@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { GameMode } from "@/types";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,24 @@ export default function Home() {
   const [hostName, setHostName] = useState("");
   const [gameMode, setGameMode] = useState<GameMode>('time');
   const [timeLimit, setTimeLimit] = useState(30);
+
+  // Saved Session State
+  const [savedSession, setSavedSession] = useState<{code: string, name: string} | null>(null);
+
+  useEffect(() => {
+    const code = localStorage.getItem("jw-game-room-code");
+    const name = localStorage.getItem("jw-game-player-name");
+    const id = localStorage.getItem("jw-game-player-id");
+    if (code && name && id) {
+        setSavedSession({ code, name });
+    }
+  }, []);
+
+  const handleReconnect = () => {
+    if (savedSession) {
+        router.push(`/room/${savedSession.code}`);
+    }
+  };
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,6 +58,7 @@ export default function Home() {
 
       localStorage.setItem("jw-game-player-id", data.playerId);
       localStorage.setItem("jw-game-player-name", joinName);
+      localStorage.setItem("jw-game-room-code", data.room.code);
       router.push(`/room/${data.room.code}`);
     } catch (error) {
       console.error(error);
@@ -76,6 +95,7 @@ export default function Home() {
 
       localStorage.setItem("jw-game-player-id", data.hostId);
       localStorage.setItem("jw-game-player-name", hostName);
+      localStorage.setItem("jw-game-room-code", data.roomCode);
       router.push(`/room/${data.roomCode}`);
     } catch (error) {
       console.error(error);
@@ -94,6 +114,18 @@ export default function Home() {
             Quiz Bíblico em Tempo Real
           </p>
         </div>
+
+        {savedSession && (
+             <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden border border-blue-200 dark:border-blue-900 mb-8 p-6 text-center animate-in fade-in slide-in-from-top-4">
+                <p className="text-sm text-zinc-500 mb-4">Você estava jogando recentemente</p>
+                <button 
+                    onClick={handleReconnect}
+                    className="w-full flex justify-center items-center gap-2 rounded-full bg-green-600 px-6 py-3 text-white font-bold hover:bg-green-700 shadow-lg transition-all hover:scale-105"
+                >
+                    <Play className="w-5 h-5" /> Continuar Jogo {savedSession.code}
+                </button>
+             </div>
+        )}
 
         <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
           <div className="flex border-b border-zinc-200 dark:border-zinc-800">

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useRoom } from "@/hooks/useRoom";
 import { cn } from "@/lib/utils";
-import { Loader2, Play, Clock } from "lucide-react";
+import { Loader2, Play, Clock, Trophy, Medal, Crown, Home } from "lucide-react";
 
 export default function RoomPage() {
   const params = useParams();
@@ -121,6 +121,7 @@ export default function RoomPage() {
   
   const showNextButton = isHost && (allAnswered || isTimeUp || room.isShowingResults);
   const areOptionsDisabled = (currentPlayer?.currentAnswer !== undefined && currentPlayer?.currentAnswer !== null) || isTimeUp || room.isShowingResults;
+  const sortedPlayers = [...room.players].sort((a, b) => b.score - a.score);
 
   return (
     <main className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-4">
@@ -299,11 +300,112 @@ export default function RoomPage() {
         </div>
       )}
 
-      {/* Finished View (Basic Implementation) */}
+      {/* Finished View */}
       {room.status === 'finished' && (
-          <div className="text-center">
-              <h2 className="text-3xl font-bold">Fim de Jogo!</h2>
-              {/* Leaderboard implementation would go here */}
+          <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+              <div className="text-center space-y-2">
+                  <h2 className="text-4xl font-bold text-zinc-900 dark:text-white">Fim de Jogo!</h2>
+                  <p className="text-zinc-500">Confira o ranking final</p>
+              </div>
+
+              {/* Podium */}
+              <div className="flex justify-center items-end gap-4 sm:gap-8 h-64 mb-12">
+                  {/* 2nd Place */}
+                  {room.players.length >= 2 && (
+                      <div className="flex flex-col items-center gap-2 w-24 sm:w-32 animate-in slide-in-from-bottom-12 duration-1000 delay-300 fill-mode-backwards">
+                          <div className="relative">
+                              <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-2xl font-bold border-4 border-slate-300 shadow-lg">
+                                  {sortedPlayers[1].name[0].toUpperCase()}
+                              </div>
+                              <div className="absolute -bottom-2 -right-2 bg-slate-300 text-slate-700 p-1 rounded-full shadow-sm">
+                                  <Medal className="w-4 h-4" />
+                              </div>
+                          </div>
+                          <div className="text-center">
+                              <p className="font-bold truncate w-full text-slate-600 dark:text-slate-400">{sortedPlayers[1].name}</p>
+                              <p className="text-sm font-mono text-slate-500">{sortedPlayers[1].score} pts</p>
+                          </div>
+                          <div className="w-full bg-slate-200 dark:bg-slate-800 h-24 rounded-t-lg mt-2 flex items-end justify-center pb-2 shadow-inner">
+                              <span className="text-4xl font-black text-slate-300 dark:text-slate-700">2</span>
+                          </div>
+                      </div>
+                  )}
+
+                  {/* 1st Place */}
+                  {room.players.length >= 1 && (
+                      <div className="flex flex-col items-center gap-2 w-28 sm:w-36 z-10 animate-in slide-in-from-bottom-16 duration-1000 delay-500 fill-mode-backwards">
+                           <div className="relative">
+                              <Crown className="w-8 h-8 text-yellow-500 absolute -top-10 left-1/2 -translate-x-1/2 animate-bounce" />
+                              <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center text-3xl font-bold border-4 border-yellow-400 shadow-xl">
+                                  {sortedPlayers[0].name[0].toUpperCase()}
+                              </div>
+                              <div className="absolute -bottom-2 -right-2 bg-yellow-400 text-yellow-900 p-1 rounded-full shadow-sm">
+                                  <Trophy className="w-5 h-5" />
+                              </div>
+                          </div>
+                          <div className="text-center">
+                              <p className="font-bold text-lg truncate w-full text-yellow-600 dark:text-yellow-400">{sortedPlayers[0].name}</p>
+                              <p className="text-sm font-mono text-yellow-600 dark:text-yellow-500 font-bold">{sortedPlayers[0].score} pts</p>
+                          </div>
+                          <div className="w-full bg-yellow-100 dark:bg-yellow-900/20 h-32 rounded-t-lg mt-2 flex items-end justify-center pb-2 shadow-inner border-t-4 border-yellow-400">
+                              <span className="text-5xl font-black text-yellow-400/50">1</span>
+                          </div>
+                      </div>
+                  )}
+
+                  {/* 3rd Place */}
+                  {room.players.length >= 3 && (
+                      <div className="flex flex-col items-center gap-2 w-24 sm:w-32 animate-in slide-in-from-bottom-12 duration-1000 delay-100 fill-mode-backwards">
+                          <div className="relative">
+                              <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center text-2xl font-bold border-4 border-orange-300 shadow-lg">
+                                  {sortedPlayers[2].name[0].toUpperCase()}
+                              </div>
+                              <div className="absolute -bottom-2 -right-2 bg-orange-300 text-orange-800 p-1 rounded-full shadow-sm">
+                                  <Medal className="w-4 h-4" />
+                              </div>
+                          </div>
+                          <div className="text-center">
+                              <p className="font-bold truncate w-full text-orange-600 dark:text-orange-400">{sortedPlayers[2].name}</p>
+                              <p className="text-sm font-mono text-orange-500">{sortedPlayers[2].score} pts</p>
+                          </div>
+                          <div className="w-full bg-orange-50 dark:bg-orange-900/10 h-16 rounded-t-lg mt-2 flex items-end justify-center pb-2 shadow-inner">
+                              <span className="text-4xl font-black text-orange-200 dark:text-orange-800">3</span>
+                          </div>
+                      </div>
+                  )}
+              </div>
+
+              {/* List for rest */}
+              {room.players.length > 3 && (
+                  <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden">
+                      {sortedPlayers.slice(3).map((player, idx) => (
+                          <div key={player.id} className="flex items-center justify-between p-4 border-b border-zinc-100 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                              <div className="flex items-center gap-4">
+                                  <span className="text-zinc-400 font-mono w-6 text-center">{idx + 4}</span>
+                                  <div className="flex items-center gap-3">
+                                      <div className="h-8 w-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-sm font-bold text-zinc-600 dark:text-zinc-400">
+                                          {player.name[0].toUpperCase()}
+                                      </div>
+                                      <span className="font-medium">{player.name}</span>
+                                  </div>
+                              </div>
+                              <span className="font-mono font-bold text-zinc-600 dark:text-zinc-400">{player.score} pts</span>
+                          </div>
+                      ))}
+                  </div>
+              )}
+
+              <div className="flex justify-center pt-8">
+                  <button
+                      onClick={() => {
+                          localStorage.removeItem("jw-game-room-code");
+                          router.push("/");
+                      }}
+                      className="px-8 py-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-full font-bold hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors flex items-center gap-2"
+                  >
+                      <Home className="w-4 h-4" /> Voltar ao Início
+                  </button>
+              </div>
           </div>
       )}
     </main>

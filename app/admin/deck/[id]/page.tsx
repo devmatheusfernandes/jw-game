@@ -1,13 +1,15 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { Deck, getDeckById, saveDeck } from "@/lib/decks";
+import { getDeckById, saveDeck } from "@/lib/decks";
 import { Question } from "@/types";
 import { generateUUID } from "@/lib/utils";
-import { ArrowLeft, Plus, Save, Trash2, Clock, CheckCircle, X, ShieldAlert, Edit } from "lucide-react";
+import { ArrowLeft, Plus, Save, Trash2, Clock, CheckCircle, X, ShieldAlert, Edit, Type, Check, Loader2, AlertTriangle, Layers } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 export default function AdminDeckEditor() {
   const { user, loading: authLoading } = useAuth();
@@ -42,9 +44,6 @@ export default function AdminDeckEditor() {
     try {
       const deck = await getDeckById(deckId);
       if (deck) {
-        // Admin can edit any deck, but mainly global ones
-        // If it's a user deck, we warn or just allow it (Super Admin power)
-        // But for this context, let's assume we are editing global decks.
         setTitle(deck.title);
         setDescription(deck.description);
         setQuestions(deck.questions);
@@ -95,6 +94,8 @@ export default function AdminDeckEditor() {
         setQCorrect(String(q.correctAnswer));
     }
     setQTime(q.timeLimit ?? 30);
+    // Scroll suave para o editor
+    window.scrollTo({ top: 200, behavior: 'smooth' });
   }
 
   function deleteQuestion(id: string) {
@@ -123,8 +124,8 @@ export default function AdminDeckEditor() {
         title,
         description,
         questions,
-        ownerId: "global", // FORCE GLOBAL
-        isGlobal: true     // FORCE GLOBAL
+        ownerId: "global", 
+        isGlobal: true   
       }, isNew ? undefined : deckId);
       router.push("/admin");
     } catch (error) {
@@ -135,208 +136,328 @@ export default function AdminDeckEditor() {
     }
   }
 
-  if (loading || authLoading) return <div className="p-8 text-center">Carregando...</div>;
+  if (loading || authLoading) {
+    return (
+        <div className="min-h-[100dvh] flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+           <Loader2 className="w-8 h-8 animate-spin text-red-600" />
+        </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-6 pb-24">
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between sticky top-0 bg-zinc-50 dark:bg-zinc-950 z-10 py-4 border-b border-zinc-200 dark:border-zinc-800">
-          <div className="flex items-center gap-4">
-            <Link href="/admin" className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-full transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
+    <div className="min-h-[100dvh] bg-gradient-to-br from-zinc-50 via-white to-red-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-red-950/20 pb-24 relative">
+      
+      {/* Background Decor */}
+      <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-red-500/5 rounded-full blur-[100px] pointer-events-none" />
+
+      {/* Sticky Header */}
+      <header className="sticky top-0 z-30 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+                <Link href="/admin" className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
+                    <ArrowLeft className="w-5 h-5 text-zinc-600 dark:text-zinc-300" />
+                </Link>
+                <div>
+                    <h1 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                        {isNew ? "Novo Deck Global" : "Editar Global"}
+                        <ShieldAlert className="w-4 h-4 text-red-600" />
+                    </h1>
+                </div>
+            </div>
+            <button
+                onClick={handleSaveDeck}
+                disabled={saving}
+                className="flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-red-600/20 hover:bg-red-700 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
+            >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {saving ? "Salvando..." : "Publicar Global"}
+            </button>
+        </div>
+      </header>
+
+      <div className="max-w-3xl mx-auto px-4 py-6 space-y-8 relative z-10">
+        
+        {/* Warning Banner */}
+        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 p-4 rounded-xl flex items-center gap-3">
+             <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-500" />
+             <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+                Você está editando um deck público. As alterações serão refletidas para todos os usuários imediatamente.
+             </p>
+        </div>
+
+        {/* Deck Info Card */}
+        <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-sm rounded-2xl border border-red-100 dark:border-red-900/20 p-6 shadow-sm space-y-4"
+        >
+          <div className="flex items-center gap-2 mb-2 text-red-600 dark:text-red-400">
+             <Layers className="w-5 h-5" />
+             <h2 className="font-bold text-lg">Informações do Deck</h2>
+          </div>
+          <div className="space-y-4">
             <div>
-                <h1 className="text-2xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-                {isNew ? "Novo Deck Global" : "Editar Deck Global"}
-                <ShieldAlert className="w-5 h-5 text-red-600" />
-                </h1>
-                <p className="text-xs text-red-600">Modo Administrador</p>
+                <label className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400 ml-1">Título</label>
+                <input
+                    type="text"
+                    value={title}
+                    onChange={e => setTitle(e.target.value)}
+                    className="w-full h-12 px-4 mt-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all font-medium text-lg placeholder:font-normal"
+                    placeholder="Ex: Conhecimentos Gerais (Global)"
+                />
+            </div>
+            <div>
+                <label className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400 ml-1">Descrição Pública</label>
+                <textarea
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
+                    className="w-full px-4 py-3 mt-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all min-h-[80px]"
+                    placeholder="Descreva o tema deste deck..."
+                />
             </div>
           </div>
-          <button
-            onClick={handleSaveDeck}
-            disabled={saving}
-            className="flex items-center gap-2 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-          >
-            {saving ? "Salvando..." : (
-              <>
-                <Save className="w-4 h-4" /> Salvar Global
-              </>
+        </motion.div>
+
+        {/* Question Editor Card */}
+        <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className={cn(
+                "bg-white dark:bg-zinc-900 rounded-2xl border-2 p-6 shadow-xl transition-all relative overflow-hidden",
+                editingQuestionId ? "border-amber-400 ring-4 ring-amber-400/10" : "border-red-100 dark:border-red-900/30"
             )}
-          </button>
-        </div>
+        >
+          {editingQuestionId && (
+              <div className="absolute top-0 left-0 w-full h-1 bg-amber-400" />
+          )}
 
-        {/* Deck Details */}
-        <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 shadow-sm space-y-4 border border-red-100 dark:border-red-900/20">
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Título</label>
-            <input
-              type="text"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent dark:text-white focus:ring-2 focus:ring-red-500 outline-none"
-              placeholder="Ex: Curiosidades Bíblicas (Global)"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Descrição</label>
-            <textarea
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent dark:text-white focus:ring-2 focus:ring-red-500 outline-none"
-              placeholder="Descrição pública do deck..."
-              rows={2}
-            />
-          </div>
-        </div>
-
-        {/* Question Form */}
-        <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 shadow-sm space-y-6 border-2 border-red-100 dark:border-red-900/20">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-zinc-900 dark:text-white">
-              {editingQuestionId ? "Editar Pergunta" : "Nova Pergunta"}
-            </h2>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+                <div className={cn("p-2 rounded-lg text-white", editingQuestionId ? "bg-amber-500" : "bg-red-600")}>
+                    <Plus className="w-5 h-5" />
+                </div>
+                <h2 className="font-bold text-lg text-zinc-900 dark:text-white">
+                    {editingQuestionId ? "Editando Pergunta" : "Adicionar Pergunta"}
+                </h2>
+            </div>
             {editingQuestionId && (
-              <button onClick={resetQuestionForm} className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300">
-                Cancelar Edição
+              <button 
+                onClick={resetQuestionForm} 
+                className="text-xs font-medium text-zinc-500 hover:text-red-500 flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 rounded-full transition-colors"
+              >
+                <X className="w-3 h-3" /> Cancelar
               </button>
             )}
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Pergunta</label>
-              <input
-                type="text"
-                value={qText}
-                onChange={e => setQText(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent dark:text-white focus:ring-2 focus:ring-red-500 outline-none"
-                placeholder="Qual é a pergunta?"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Tipo</label>
-                <select
-                  value={qType}
-                  onChange={e => setQType(e.target.value as any)}
-                  className="w-full px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent dark:text-white focus:ring-2 focus:ring-red-500 outline-none"
-                >
-                  <option value="multiple_choice">Múltipla Escolha</option>
-                  <option value="true_false">Verdadeiro ou Falso</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Tempo (segundos)</label>
-                <input
-                  type="number"
-                  value={qTime}
-                  onChange={e => setQTime(Number(e.target.value))}
-                  className="w-full px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent dark:text-white focus:ring-2 focus:ring-red-500 outline-none"
-                />
-              </div>
-            </div>
-
-            {qType === "multiple_choice" ? (
-              <div className="space-y-3">
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Opções (marque a correta)</label>
-                {qOptions.map((opt, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
+          <div className="space-y-6">
+            <div className="grid gap-4 sm:grid-cols-[1fr_120px]">
+                <div>
+                    <label className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400 ml-1">Pergunta</label>
                     <input
-                      type="radio"
-                      name="correct-answer"
-                      checked={qCorrect === opt && opt !== ""}
-                      onChange={() => setQCorrect(opt)}
-                      className="w-4 h-4 text-red-600 focus:ring-red-500"
+                        type="text"
+                        value={qText}
+                        onChange={e => setQText(e.target.value)}
+                        className="w-full h-12 px-4 mt-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none font-medium"
+                        placeholder="Digite a pergunta..."
                     />
-                    <input
-                      type="text"
-                      value={opt}
-                      onChange={e => {
-                        const newOptions = [...qOptions];
-                        newOptions[idx] = e.target.value;
-                        setQOptions(newOptions);
-                        if (qCorrect === opt) setQCorrect(e.target.value);
-                      }}
-                      className="flex-1 px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-transparent dark:text-white focus:ring-2 focus:ring-red-500 outline-none text-sm"
-                      placeholder={`Opção ${idx + 1}`}
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Resposta Correta</label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="tf-correct"
-                      checked={qCorrect === "true"}
-                      onChange={() => setQCorrect("true")}
-                      className="w-4 h-4 text-red-600 focus:ring-red-500"
-                    />
-                    <span className="text-zinc-900 dark:text-white">Verdadeiro</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="tf-correct"
-                      checked={qCorrect === "false"}
-                      onChange={() => setQCorrect("false")}
-                      className="w-4 h-4 text-red-600 focus:ring-red-500"
-                    />
-                    <span className="text-zinc-900 dark:text-white">Falso</span>
-                  </label>
                 </div>
-              </div>
-            )}
+                <div>
+                    <label className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400 ml-1 flex items-center gap-1">
+                        <Clock className="w-3 h-3" /> Tempo (s)
+                    </label>
+                    <input
+                        type="number"
+                        min="5"
+                        max="300"
+                        value={qTime}
+                        onChange={e => setQTime(Number(e.target.value))}
+                        className="w-full h-12 px-4 mt-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none text-center font-mono font-bold"
+                    />
+                </div>
+            </div>
+
+            <div className="p-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex">
+                <button
+                    onClick={() => setQType("multiple_choice")}
+                    className={cn(
+                        "flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2",
+                        qType === "multiple_choice" 
+                            ? "bg-white dark:bg-zinc-700 text-red-600 dark:text-red-300 shadow-sm" 
+                            : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    )}
+                >
+                    <Type className="w-4 h-4" /> Múltipla Escolha
+                </button>
+                <button
+                    onClick={() => setQType("true_false")}
+                    className={cn(
+                        "flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2",
+                        qType === "true_false" 
+                            ? "bg-white dark:bg-zinc-700 text-red-600 dark:text-red-300 shadow-sm" 
+                            : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    )}
+                >
+                    <CheckCircle className="w-4 h-4" /> Verdadeiro / Falso
+                </button>
+            </div>
+
+            <div className="bg-zinc-50/50 dark:bg-zinc-800/30 rounded-xl p-4 border border-zinc-200 dark:border-zinc-800">
+                {qType === "multiple_choice" ? (
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between mb-2">
+                             <span className="text-xs font-bold uppercase text-zinc-500">Opções</span>
+                             <span className="text-[10px] text-red-600 bg-red-50 px-2 py-0.5 rounded-full font-medium">Marque a correta</span>
+                        </div>
+                        {qOptions.map((opt, idx) => (
+                            <div key={idx} className="flex items-center gap-2 group">
+                                <button
+                                    onClick={() => setQCorrect(opt)}
+                                    className={cn(
+                                        "w-10 h-10 flex-shrink-0 rounded-lg border-2 flex items-center justify-center transition-all",
+                                        qCorrect === opt && opt !== "" 
+                                            ? "bg-green-500 border-green-500 text-white shadow-md shadow-green-500/20" 
+                                            : "border-zinc-300 dark:border-zinc-600 text-zinc-300 hover:border-zinc-400 bg-white dark:bg-zinc-800"
+                                    )}
+                                    title="Definir como correta"
+                                >
+                                    <Check className="w-5 h-5" />
+                                </button>
+                                <input
+                                    type="text"
+                                    value={opt}
+                                    onChange={e => {
+                                        const newOptions = [...qOptions];
+                                        newOptions[idx] = e.target.value;
+                                        setQOptions(newOptions);
+                                        if (qCorrect === opt) setQCorrect(e.target.value);
+                                    }}
+                                    className={cn(
+                                        "flex-1 h-10 px-4 rounded-lg border bg-white dark:bg-zinc-800 focus:outline-none transition-all text-sm",
+                                        qCorrect === opt && opt !== ""
+                                            ? "border-green-500 ring-1 ring-green-500 text-green-700 dark:text-green-400 font-medium"
+                                            : "border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                                    )}
+                                    placeholder={`Opção ${idx + 1}`}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        <span className="text-xs font-bold uppercase text-zinc-500">Selecione a resposta correta</span>
+                        <div className="flex gap-4">
+                            <button
+                                onClick={() => setQCorrect("true")}
+                                className={cn(
+                                    "flex-1 py-4 rounded-xl border-2 font-bold text-lg transition-all flex items-center justify-center gap-2",
+                                    qCorrect === "true"
+                                        ? "bg-green-500 border-green-500 text-white shadow-lg shadow-green-500/20"
+                                        : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 hover:bg-green-50 dark:hover:bg-zinc-700"
+                                )}
+                            >
+                                Verdadeiro
+                            </button>
+                            <button
+                                onClick={() => setQCorrect("false")}
+                                className={cn(
+                                    "flex-1 py-4 rounded-xl border-2 font-bold text-lg transition-all flex items-center justify-center gap-2",
+                                    qCorrect === "false"
+                                        ? "bg-red-500 border-red-500 text-white shadow-lg shadow-red-500/20"
+                                        : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 hover:bg-red-50 dark:hover:bg-zinc-700"
+                                )}
+                            >
+                                Falso
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
 
             <button
-              onClick={handleSaveQuestion}
-              className="w-full py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex justify-center items-center gap-2"
+                onClick={handleSaveQuestion}
+                className={cn(
+                    "w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2",
+                    editingQuestionId 
+                        ? "bg-amber-500 hover:bg-amber-600 shadow-amber-500/20" 
+                        : "bg-red-600 hover:bg-red-700 shadow-red-600/20"
+                )}
             >
-              {editingQuestionId ? "Atualizar Pergunta" : "Adicionar Pergunta"}
+                {editingQuestionId ? <CheckCircle className="w-5 h-5"/> : <Plus className="w-5 h-5"/>}
+                {editingQuestionId ? "Atualizar Pergunta" : "Adicionar à Lista"}
             </button>
           </div>
-        </div>
+        </motion.div>
 
         {/* Questions List */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-            Perguntas <span className="text-sm font-normal text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-full">{questions.length}</span>
-          </h2>
+        <div className="space-y-4 pt-4">
+          <div className="flex items-center justify-between px-2">
+            <h2 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+               Lista de Perguntas 
+               <span className="text-sm font-bold text-white bg-red-400 dark:bg-red-700 px-2 py-0.5 rounded-full">{questions.length}</span>
+            </h2>
+          </div>
           
-          <div className="space-y-3">
-            {questions.map((q, idx) => (
-              <div key={q.id} className="bg-white dark:bg-zinc-900 rounded-lg p-4 shadow-sm border border-zinc-200 dark:border-zinc-800 flex items-start justify-between group">
-                <div className="flex gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-xs font-medium text-zinc-500">
-                    {idx + 1}
-                  </span>
-                  <div>
-                    <p className="font-medium text-zinc-900 dark:text-white">{q.text}</p>
-                    <div className="flex gap-2 mt-1 text-xs text-zinc-500">
-                      <span className="uppercase">{q.type === 'multiple_choice' ? 'Múltipla Escolha' : 'V/F'}</span>
-                      <span>•</span>
-                      <span>{q.timeLimit}s</span>
+          <div className="space-y-3 min-h-[100px]">
+            <AnimatePresence mode="popLayout">
+                {questions.map((q, idx) => (
+                <motion.div
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    key={q.id}
+                    className={cn(
+                        "group bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-zinc-200 dark:border-zinc-800 flex items-center gap-4 transition-all hover:border-red-200 dark:hover:border-red-900",
+                        editingQuestionId === q.id && "ring-2 ring-amber-400 border-amber-400 bg-amber-50/50 dark:bg-amber-900/10"
+                    )}
+                >
+                    <div className="flex-shrink-0 w-8 h-8 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-sm font-bold text-zinc-500">
+                        {idx + 1}
                     </div>
-                  </div>
-                </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => editQuestion(q)} className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded">
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => deleteQuestion(q.id)} className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
+                    
+                    <div className="flex-1 min-w-0">
+                        <p className="font-bold text-zinc-800 dark:text-zinc-200 truncate">{q.text}</p>
+                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                            <span className={cn(
+                                "text-[10px] uppercase font-bold px-1.5 py-0.5 rounded",
+                                q.type === 'multiple_choice' ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                            )}>
+                                {q.type === 'multiple_choice' ? 'Múltipla Escolha' : 'V/F'}
+                            </span>
+                            <span className="text-xs text-zinc-400 flex items-center gap-1">
+                                <Clock className="w-3 h-3" /> {q.timeLimit}s
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                        <button 
+                            onClick={() => editQuestion(q)} 
+                            className="p-2 text-zinc-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
+                            title="Editar"
+                        >
+                            <Edit className="w-4 h-4" />
+                        </button>
+                        <button 
+                            onClick={() => deleteQuestion(q.id)} 
+                            className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="Excluir"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    </div>
+                </motion.div>
+                ))}
+            </AnimatePresence>
+            
             {questions.length === 0 && (
-              <p className="text-center text-zinc-500 py-8 italic">Nenhuma pergunta adicionada ainda.</p>
+                <div className="text-center py-12 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl">
+                    <ShieldAlert className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
+                    <p className="text-zinc-500 dark:text-zinc-400 font-medium">Deck Global Vazio.</p>
+                    <p className="text-sm text-zinc-400">Adicione perguntas para publicar.</p>
+                </div>
             )}
           </div>
         </div>

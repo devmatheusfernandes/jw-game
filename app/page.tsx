@@ -3,12 +3,15 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { GameMode } from "@/types";
-import { DECKS } from "@/lib/decks";
+import { getDecks, Deck } from "@/lib/decks";
 import { cn } from "@/lib/utils";
-import { Users, Play, Clock, CheckCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Users, Play, Clock, CheckCircle, LogOut, LayoutDashboard, LogIn } from "lucide-react";
+import Link from "next/link";
 
 export default function Home() {
   const router = useRouter();
+  const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<'create' | 'join'>('join');
   const [loading, setLoading] = useState(false);
 
@@ -20,7 +23,19 @@ export default function Home() {
   const [hostName, setHostName] = useState("");
   const [gameMode, setGameMode] = useState<GameMode>('time');
   const [timeLimit, setTimeLimit] = useState(30);
-  const [selectedDeckId, setSelectedDeckId] = useState(DECKS[0].id);
+  const [decks, setDecks] = useState<Deck[]>([]);
+  const [selectedDeckId, setSelectedDeckId] = useState("");
+
+  useEffect(() => {
+    async function loadDecks() {
+      const loadedDecks = await getDecks(user?.uid);
+      setDecks(loadedDecks);
+      if (loadedDecks.length > 0 && !selectedDeckId) {
+        setSelectedDeckId(loadedDecks[0].id);
+      }
+    }
+    loadDecks();
+  }, [user]);
 
   // Saved Session State
   const [savedSession, setSavedSession] = useState<{code: string, name: string} | null>(null);
@@ -109,14 +124,45 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white dark:from-zinc-900 dark:to-zinc-950 p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-blue-600 dark:text-blue-400">JW Game</h1>
-          <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-            Quiz Bíblico em Tempo Real
-          </p>
-        </div>
+
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-zinc-900 dark:to-zinc-950 relative">
+      <header className="absolute top-0 right-0 p-4 z-10">
+        {user ? (
+          <div className="flex items-center gap-3">
+            <Link 
+              href="/dashboard" 
+              className="flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm rounded-full text-zinc-700 dark:text-zinc-200 hover:bg-white dark:hover:bg-zinc-800 shadow-sm transition-all border border-zinc-200 dark:border-zinc-700 text-sm font-medium"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              Dashboard
+            </Link>
+            <button 
+              onClick={() => logout()}
+              className="flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm rounded-full text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 shadow-sm transition-all border border-zinc-200 dark:border-zinc-700 text-sm font-medium"
+            >
+              <LogOut className="w-4 h-4" />
+              Sair
+            </button>
+          </div>
+        ) : (
+          <Link 
+            href="/login"
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600/90 backdrop-blur-sm rounded-full text-white hover:bg-indigo-700 shadow-sm transition-all text-sm font-medium"
+          >
+            <LogIn className="w-4 h-4" />
+            Login
+          </Link>
+        )}
+      </header>
+
+        <div className="w-full max-w-md space-y-8">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold tracking-tight text-blue-600 dark:text-blue-400">JW Game</h1>
+            <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+              Quiz Bíblico em Tempo Real
+            </p>
+          </div>
+
 
         {savedSession && (
              <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden border border-blue-200 dark:border-blue-900 mb-8 p-6 text-center animate-in fade-in slide-in-from-top-4">
@@ -213,7 +259,7 @@ export default function Home() {
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Tema das Perguntas</label>
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
-                    {DECKS.map((deck) => (
+                    {decks.map((deck) => (
                       <div 
                         key={deck.id}
                         onClick={() => setSelectedDeckId(deck.id)}
@@ -224,7 +270,14 @@ export default function Home() {
                                 : "border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
                         )}
                       >
-                        <div className="font-medium text-zinc-900 dark:text-zinc-100">{deck.title}</div>
+                        <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                          {deck.title}
+                          {deck.isGlobal ? (
+                             <span className="ml-2 text-[10px] uppercase tracking-wider bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded dark:bg-zinc-800 dark:text-zinc-400">Global</span>
+                          ) : (
+                             <span className="ml-2 text-[10px] uppercase tracking-wider bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded dark:bg-indigo-900/30 dark:text-indigo-400">Meu Deck</span>
+                          )}
+                        </div>
                         <div className="text-xs text-zinc-500">{deck.description}</div>
                       </div>
                     ))}
@@ -293,7 +346,6 @@ export default function Home() {
             )}
           </div>
         </div>
-      </div>
-    </main>
+      </div></div>
   );
 }

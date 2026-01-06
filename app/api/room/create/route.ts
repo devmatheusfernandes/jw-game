@@ -3,7 +3,7 @@ import { generateRoomCode, generateUUID } from "@/lib/utils";
 import { Room, Player } from "@/types";
 import { doc, setDoc } from "firebase/firestore";
 import { NextResponse } from "next/server";
-import { DECKS } from "@/lib/decks";
+import { getDeckById } from "@/lib/decks";
 
 export async function POST(req: Request) {
   try {
@@ -25,7 +25,10 @@ export async function POST(req: Request) {
       connected: true,
     };
 
-    const selectedDeck = DECKS.find(d => d.id === deckId) || DECKS[0];
+    const selectedDeck = await getDeckById(deckId);
+    if (!selectedDeck) {
+        return NextResponse.json({ error: "Deck not found" }, { status: 404 });
+    }
 
     const newRoom: Room = {
       code: roomCode,

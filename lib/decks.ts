@@ -1,149 +1,113 @@
 import { Question } from "@/types";
+import { db } from "./firebase";
+import { collection, getDocs, query, where, addDoc, doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 
 export interface Deck {
   id: string;
   title: string;
   description: string;
   questions: Question[];
+  ownerId?: string;
+  isGlobal?: boolean;
+  createdAt?: number;
 }
 
-export const DECKS: Deck[] = [
-  {
-    id: "general-easy",
-    title: "Conhecimentos Gerais (Fácil)",
-    description: "Perguntas básicas sobre a Bíblia para iniciantes.",
-    questions: [
-      {
-        id: "q1",
-        text: "Quem construiu a arca?",
-        type: "multiple_choice",
-        options: ["Moisés", "Noé", "Abraão", "Davi"],
-        correctAnswer: "Noé",
-        timeLimit: 30
-      },
-      {
-        id: "q2",
-        text: "Qual é o primeiro livro da Bíblia?",
-        type: "multiple_choice",
-        options: ["Êxodo", "Salmos", "Gênesis", "Mateus"],
-        correctAnswer: "Gênesis",
-        timeLimit: 30
-      },
-      {
-        id: "q3",
-        text: "Jesus nasceu em qual cidade?",
-        type: "multiple_choice",
-        options: ["Nazaré", "Jerusalém", "Belém", "Jericó"],
-        correctAnswer: "Belém",
-        timeLimit: 30
-      },
-      {
-        id: "q4",
-        text: "Davi derrotou o gigante Golias.",
-        type: "true_false",
-        correctAnswer: true,
-        timeLimit: 30
-      },
-      {
-        id: "q5",
-        text: "Quantos apóstolos Jesus escolheu?",
-        type: "multiple_choice",
-        options: ["10", "12", "7", "3"],
-        correctAnswer: "12",
-        timeLimit: 30
-      }
-    ]
-  },
-  {
-    id: "jesus-life",
-    title: "Vida de Jesus",
-    description: "Perguntas focadas nos milagres e ensinamentos de Jesus.",
-    questions: [
-      {
-        id: "j1",
-        text: "Qual foi o primeiro milagre de Jesus?",
-        type: "multiple_choice",
-        options: ["Andar sobre as águas", "Transformar água em vinho", "Curar um cego", "Multiplicar pães"],
-        correctAnswer: "Transformar água em vinho",
-        timeLimit: 30
-      },
-      {
-        id: "j2",
-        text: "Quem batizou Jesus?",
-        type: "multiple_choice",
-        options: ["Pedro", "João Batista", "Tiago", "Paulo"],
-        correctAnswer: "João Batista",
-        timeLimit: 30
-      },
-      {
-        id: "j3",
-        text: "Jesus ressuscitou Lázaro.",
-        type: "true_false",
-        correctAnswer: true,
-        timeLimit: 30
-      },
-      {
-        id: "j4",
-        text: "Onde Jesus foi crucificado?",
-        type: "multiple_choice",
-        options: ["Gólgota", "Getsêmani", "Monte das Oliveiras", "Templo"],
-        correctAnswer: "Gólgota",
-        timeLimit: 30
-      },
-      {
-        id: "j5",
-        text: "Quantos dias Jesus ficou no deserto sendo tentado?",
-        type: "multiple_choice",
-        options: ["3 dias", "7 dias", "40 dias", "12 dias"],
-        correctAnswer: "40 dias",
-        timeLimit: 30
-      }
-    ]
-  },
-  {
-    id: "old-testament",
-    title: "Velho Testamento",
-    description: "Desafios sobre profetas, reis e eventos antigos.",
-    questions: [
-      {
-        id: "ot1",
-        text: "Quem foi engolido por um grande peixe?",
-        type: "multiple_choice",
-        options: ["Jonas", "Daniel", "Elias", "Moisés"],
-        correctAnswer: "Jonas",
-        timeLimit: 30
-      },
-      {
-        id: "ot2",
-        text: "Quem liderou o povo de Israel na saída do Egito?",
-        type: "multiple_choice",
-        options: ["Josué", "Moisés", "Arão", "José"],
-        correctAnswer: "Moisés",
-        timeLimit: 30
-      },
-      {
-        id: "ot3",
-        text: "Salomão era conhecido por sua força física.",
-        type: "true_false",
-        correctAnswer: false,
-        timeLimit: 30
-      },
-      {
-        id: "ot4",
-        text: "Quem foi jogado na cova dos leões?",
-        type: "multiple_choice",
-        options: ["Daniel", "Sadraque", "Davi", "Samuel"],
-        correctAnswer: "Daniel",
-        timeLimit: 30
-      },
-      {
-        id: "ot5",
-        text: "Qual profeta foi levado ao céu em uma carruagem de fogo?",
-        type: "multiple_choice",
-        options: ["Eliseu", "Elias", "Isaías", "Jeremias"],
-        correctAnswer: "Elias",
-        timeLimit: 30
-      }
-    ]
+export async function getDecks(userId?: string): Promise<Deck[]> {
+  const userDecks: Deck[] = [];
+  const globalDecks: Deck[] = [];
+  
+  try {
+    // Fetch global decks from Firestore
+    const globalQ = query(collection(db, "decks"), where("isGlobal", "==", true));
+    const globalSnapshot = await getDocs(globalQ);
+    
+    globalSnapshot.forEach((doc) => {
+      globalDecks.push({ id: doc.id, ...doc.data() } as Deck);
+    });
+
+    // Fetch user decks if logged in
+    if (userId) {
+      const userQ = query(collection(db, "decks"), where("ownerId", "==", userId));
+      const userSnapshot = await getDocs(userQ);
+      
+      userSnapshot.forEach((doc) => {
+        userDecks.push({ id: doc.id, ...doc.data() } as Deck);
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching decks:", error);
   }
-];
+
+  // Return user decks first, then global decks
+  return [...userDecks, ...globalDecks];
+}
+
+export async function getGlobalDecks(): Promise<Deck[]> {
+  const decks: Deck[] = [];
+  try {
+    const globalQ = query(collection(db, "decks"), where("isGlobal", "==", true));
+    const globalSnapshot = await getDocs(globalQ);
+    
+    globalSnapshot.forEach((doc) => {
+      decks.push({ id: doc.id, ...doc.data() } as Deck);
+    });
+  } catch (error) {
+    console.error("Error fetching global decks:", error);
+  }
+  return decks;
+}
+
+export async function getUserDecks(userId: string): Promise<Deck[]> {
+  const decks: Deck[] = [];
+  try {
+    const userQ = query(collection(db, "decks"), where("ownerId", "==", userId));
+    const userSnapshot = await getDocs(userQ);
+    
+    userSnapshot.forEach((doc) => {
+      decks.push({ id: doc.id, ...doc.data() } as Deck);
+    });
+  } catch (error) {
+    console.error("Error fetching user decks:", error);
+  }
+  return decks;
+}
+
+export async function getDeckById(deckId: string): Promise<Deck | undefined> {
+  // Check Firestore
+  try {
+    const deckRef = doc(db, "decks", deckId);
+    const deckSnap = await getDoc(deckRef);
+    
+    if (deckSnap.exists()) {
+      return { id: deckSnap.id, ...deckSnap.data() } as Deck;
+    }
+  } catch (error) {
+    console.error("Error fetching deck:", error);
+  }
+  
+  return undefined;
+}
+
+export async function saveDeck(deck: Omit<Deck, "id">, id?: string): Promise<string> {
+  try {
+    if (id) {
+      await setDoc(doc(db, "decks", id), { ...deck, createdAt: Date.now() }, { merge: true });
+      return id;
+    } else {
+      const docRef = await addDoc(collection(db, "decks"), { ...deck, createdAt: Date.now() });
+      return docRef.id;
+    }
+  } catch (error) {
+    console.error("Error saving deck:", error);
+    throw error;
+  }
+}
+
+export async function deleteDeck(deckId: string) {
+    try {
+        await deleteDoc(doc(db, "decks", deckId));
+    } catch (error) {
+        console.error("Error deleting deck:", error);
+        throw error;
+    }
+}

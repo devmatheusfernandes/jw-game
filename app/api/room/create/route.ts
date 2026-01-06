@@ -3,11 +3,12 @@ import { generateRoomCode, generateUUID } from "@/lib/utils";
 import { Room, Player } from "@/types";
 import { doc, setDoc } from "firebase/firestore";
 import { NextResponse } from "next/server";
+import { DECKS } from "@/lib/decks";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { hostName, settings } = body;
+    const { hostName, settings, deckId } = body;
 
     if (!hostName) {
       return NextResponse.json({ error: "Host name is required" }, { status: 400 });
@@ -24,12 +25,14 @@ export async function POST(req: Request) {
       connected: true,
     };
 
+    const selectedDeck = DECKS.find(d => d.id === deckId) || DECKS[0];
+
     const newRoom: Room = {
       code: roomCode,
       hostId,
       status: 'waiting',
       players: [hostPlayer],
-      questions: [], // Questions will be added later or selected from a preset
+      questions: selectedDeck.questions,
       currentQuestionIndex: -1,
       settings: settings || {
         mode: 'time',

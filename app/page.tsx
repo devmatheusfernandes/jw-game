@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { GameMode } from "@/types";
+import { DECKS } from "@/lib/decks";
 import { cn } from "@/lib/utils";
 import { Users, Play, Clock, CheckCircle } from "lucide-react";
 
@@ -19,6 +20,7 @@ export default function Home() {
   const [hostName, setHostName] = useState("");
   const [gameMode, setGameMode] = useState<GameMode>('time');
   const [timeLimit, setTimeLimit] = useState(30);
+  const [selectedDeckId, setSelectedDeckId] = useState(DECKS[0].id);
 
   // Saved Session State
   const [savedSession, setSavedSession] = useState<{code: string, name: string} | null>(null);
@@ -78,6 +80,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           hostName,
+          deckId: selectedDeckId,
           settings: {
             mode: gameMode,
             timeLimitPerQuestion: timeLimit,
@@ -205,6 +208,27 @@ export default function Home() {
                     className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
                     placeholder="Ex: Matheus"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Tema das Perguntas</label>
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                    {DECKS.map((deck) => (
+                      <div 
+                        key={deck.id}
+                        onClick={() => setSelectedDeckId(deck.id)}
+                        className={cn(
+                            "p-3 rounded-lg border cursor-pointer transition-all text-left",
+                            selectedDeckId === deck.id 
+                                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500" 
+                                : "border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                        )}
+                      >
+                        <div className="font-medium text-zinc-900 dark:text-zinc-100">{deck.title}</div>
+                        <div className="text-xs text-zinc-500">{deck.description}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 <div>

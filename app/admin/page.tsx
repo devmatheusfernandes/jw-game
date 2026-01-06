@@ -6,11 +6,22 @@ import { Plus, Edit, Trash2, Globe, Loader2, ShieldAlert, ArrowLeft, Lock } from
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
   const [decks, setDecks] = useState<Deck[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -29,13 +40,15 @@ export default function AdminDashboard() {
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm("Tem certeza que deseja excluir este deck global? Isso afetará todos os jogadores.")) return;
+  async function handleDelete() {
+    if (!deleteId) return;
     try {
-      await deleteDeck(id);
-      setDecks((prev) => prev.filter(d => d.id !== id));
+      await deleteDeck(deleteId);
+      setDecks((prev) => prev.filter(d => d.id !== deleteId));
     } catch (error) {
       alert("Erro ao excluir deck");
+    } finally {
+      setDeleteId(null);
     }
   }
 
@@ -185,7 +198,7 @@ export default function AdminDashboard() {
                                 <Edit className="w-4 h-4" />
                             </Link>
                             <button
-                                onClick={() => handleDelete(deck.id)}
+                                onClick={() => setDeleteId(deck.id)}
                                 className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                 title="Excluir"
                             >
@@ -199,6 +212,23 @@ export default function AdminDashboard() {
           </motion.div>
         )}
       </div>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Deck Global?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este deck global? Esta ação não pode ser desfeita e afetará todos os jogadores.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

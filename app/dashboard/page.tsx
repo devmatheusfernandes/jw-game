@@ -7,13 +7,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [decks, setDecks] = useState<Deck[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -38,14 +39,16 @@ export default function Dashboard() {
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm("Tem certeza que deseja excluir este deck?")) return;
+  async function handleDelete() {
+    if (!deleteId) return;
     try {
-      await deleteDeck(id);
+      await deleteDeck(deleteId);
       // Atualiza o estado local removendo o deck deletado
-      setDecks((prev) => prev.filter(d => d.id !== id));
+      setDecks((prev) => prev.filter(d => d.id !== deleteId));
     } catch (error) {
       alert("Erro ao excluir deck");
+    } finally {
+      setDeleteId(null);
     }
   }
 
@@ -186,7 +189,7 @@ export default function Dashboard() {
                                 <Edit className="w-4 h-4" />
                             </Link>
                             <button
-                                onClick={() => handleDelete(deck.id)}
+                                onClick={() => setDeleteId(deck.id)}
                                 className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                 title="Excluir Deck"
                             >
@@ -200,6 +203,23 @@ export default function Dashboard() {
           </motion.div>
         )}
       </div>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Deck?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este deck? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -172,7 +172,7 @@ export default function Home() {
             JW <span className="text-blue-600 dark:text-blue-400">Game</span>
           </h1>
           <p className="text-zinc-500 dark:text-zinc-400 text-sm font-medium">
-            Quiz Bíblico Interativo em Tempo Real
+            Teste seu estudo pessoal
           </p>
         </motion.div>
 
@@ -416,7 +416,7 @@ export default function Home() {
       
       {/* Footer simples */}
       <footer className="absolute bottom-2 text-center w-full p-2 z-10 opacity-40 text-[10px] text-zinc-500 dark:text-zinc-600">
-         Jw Game v1.0 • Feito com ❤️
+         Jw Game v1.0
       </footer>
     </div>
   );

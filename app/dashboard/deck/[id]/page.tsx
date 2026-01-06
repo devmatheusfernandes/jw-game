@@ -10,6 +10,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function DeckEditor() {
   const { user, loading: authLoading } = useAuth();
@@ -20,6 +21,7 @@ export default function DeckEditor() {
 
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+  const [deleteQuestionId, setDeleteQuestionId] = useState<string | null>(null);
 
   // Deck State
   const [title, setTitle] = useState("");
@@ -109,9 +111,10 @@ export default function DeckEditor() {
     window.scrollTo({ top: 200, behavior: 'smooth' });
   }
 
-  function deleteQuestion(id: string) {
-    if (confirm("Remover pergunta?")) {
-      setQuestions(questions.filter(q => q.id !== id));
+  function handleDeleteQuestion() {
+    if (deleteQuestionId) {
+      setQuestions(questions.filter(q => q.id !== deleteQuestionId));
+      setDeleteQuestionId(null);
     }
   }
 
@@ -444,7 +447,7 @@ export default function DeckEditor() {
                             <Edit className="w-4 h-4" />
                         </button>
                         <button 
-                            onClick={() => deleteQuestion(q.id)} 
+                            onClick={() => setDeleteQuestionId(q.id)} 
                             className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                             title="Excluir"
                         >
@@ -465,6 +468,23 @@ export default function DeckEditor() {
           </div>
         </div>
       </div>
+
+      <AlertDialog open={!!deleteQuestionId} onOpenChange={(open) => !open && setDeleteQuestionId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover Pergunta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover esta pergunta?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteQuestion} className="bg-red-600 hover:bg-red-700">
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

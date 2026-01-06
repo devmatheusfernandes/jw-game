@@ -37,4 +37,5 @@ export interface Room {
   settings: GameSettings;
   createdAt: number;
   questionStartTime?: number; // Timestamp when the current question started
+  isShowingResults?: boolean;
 }

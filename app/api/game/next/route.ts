@@ -1,5 +1,5 @@
 import { db } from "@/lib/firebase";
-import { Room, Player } from "@/types";
+import { Room } from "@/types";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { NextResponse } from "next/server";
 
@@ -26,38 +26,47 @@ export async function POST(req: Request) {
     }
 
     const currentQuestion = roomData.questions[roomData.currentQuestionIndex];
-    
-    // Calculate Scores
-    const players = roomData.players.map(player => {
-        let newScore = player.score;
-        if (player.currentAnswer === currentQuestion.correctAnswer) {
-            newScore += 10; // Simple scoring
-        }
-        return {
-            ...player,
-            score: newScore,
-            currentAnswer: null // Reset for next question
-        };
-    });
+    let updates: any = {};
 
-    const nextIndex = roomData.currentQuestionIndex + 1;
-    let updates: any = {
-        players: players,
-        currentQuestionIndex: nextIndex,
-        questionStartTime: Date.now()
-    };
-
-    if (nextIndex >= roomData.questions.length) {
+    if (!roomData.isShowingResults) {
+        // Step 1: Show Results
         updates = {
-            ...updates,
-            status: 'finished',
-            currentQuestionIndex: -1 // Or keep it at max? -1 to indicate done
+            isShowingResults: true
         };
+    } else {
+        // Step 2: Move to Next Question (and calculate scores)
+        const players = roomData.players.map(player => {
+            let newScore = player.score;
+            if (player.currentAnswer === currentQuestion.correctAnswer) {
+                newScore += 10; // Simple scoring
+            }
+            return {
+                ...player,
+                score: newScore,
+                currentAnswer: null // Reset for next question
+            };
+        });
+
+        const nextIndex = roomData.currentQuestionIndex + 1;
+        updates = {
+            players: players,
+            currentQuestionIndex: nextIndex,
+            questionStartTime: Date.now(),
+            isShowingResults: false
+        };
+
+        if (nextIndex >= roomData.questions.length) {
+            updates = {
+                ...updates,
+                status: 'finished',
+                currentQuestionIndex: -1 // Or keep it at max? -1 to indicate done
+            };
+        }
     }
 
     await updateDoc(roomRef, updates);
 
-    return NextResponse.json({ success: true, finished: nextIndex >= roomData.questions.length });
+    return NextResponse.json({ success: true, isShowingResults: updates.isShowingResults });
   } catch (error) {
     console.error("Error advancing game:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

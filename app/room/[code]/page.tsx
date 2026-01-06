@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useRoom } from "@/hooks/useRoom";
 import { cn } from "@/lib/utils";
-import { Loader2, User, Play, Clock, CheckCircle, XCircle } from "lucide-react";
-import { Player } from "@/types";
+import { Loader2, Play, Clock } from "lucide-react";
 
 export default function RoomPage() {
   const params = useParams();
@@ -82,6 +81,20 @@ export default function RoomPage() {
     }
   };
 
+  const handleNextQuestion = async () => {
+    if (!playerId) return;
+    try {
+      await fetch("/api/game/next", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, hostId: playerId }),
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao avançar pergunta");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -104,7 +117,10 @@ export default function RoomPage() {
   const isHost = room.hostId === playerId;
   const currentPlayer = room.players.find(p => p.id === playerId);
   const allAnswered = room.players.every(p => p.currentAnswer !== undefined && p.currentAnswer !== null);
-  const showNextButton = isHost && (allAnswered || (room.settings.mode === 'time' && timeLeft === 0));
+  const isTimeUp = room.settings.mode === 'time' && timeLeft === 0;
+  
+  const showNextButton = isHost && (allAnswered || isTimeUp || room.isShowingResults);
+  const areOptionsDisabled = (currentPlayer?.currentAnswer !== undefined && currentPlayer?.currentAnswer !== null) || isTimeUp || room.isShowingResults;
 
   return (
     <main className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-4">
@@ -172,10 +188,15 @@ export default function RoomPage() {
                      </div>
 
                      {/* Question Card */}
-                     <div className="bg-white dark:bg-zinc-900 rounded-2xl p-8 shadow-lg text-center min-h-[200px] flex items-center justify-center">
+                     <div className="bg-white dark:bg-zinc-900 rounded-2xl p-8 shadow-lg text-center min-h-[200px] flex items-center justify-center flex-col gap-4">
                         <h2 className="text-2xl sm:text-3xl font-bold text-zinc-800 dark:text-zinc-100">
                             {room.questions[room.currentQuestionIndex].text}
                         </h2>
+                        {room.isShowingResults && (
+                             <div className="text-lg font-medium text-zinc-500">
+                                 Resposta Correta: <span className="text-green-600 font-bold">{String(room.questions[room.currentQuestionIndex].correctAnswer)}</span>
+                             </div>
+                        )}
                      </div>
 
                      {/* Options */}
@@ -183,16 +204,28 @@ export default function RoomPage() {
                         {room.questions[room.currentQuestionIndex].type === 'multiple_choice' ? (
                             room.questions[room.currentQuestionIndex].options?.map((option, idx) => {
                                 const isSelected = currentPlayer?.currentAnswer === option;
+                                const isCorrect = option === room.questions[room.currentQuestionIndex].correctAnswer;
+                                
+                                let buttonClass = "bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-sm";
+                                if (room.isShowingResults) {
+                                    if (isCorrect) buttonClass = "bg-green-600 text-white shadow-md ring-2 ring-green-600 ring-offset-2 dark:ring-offset-zinc-950";
+                                    else if (isSelected) buttonClass = "bg-red-500 text-white opacity-80";
+                                    else buttonClass = "bg-zinc-100 dark:bg-zinc-800 opacity-50";
+                                } else if (isSelected) {
+                                    buttonClass = "bg-blue-600 text-white shadow-md ring-2 ring-blue-600 ring-offset-2 dark:ring-offset-zinc-950";
+                                } else if (areOptionsDisabled) {
+                                     buttonClass = "bg-zinc-200 dark:bg-zinc-800 opacity-50 cursor-not-allowed";
+                                }
+
                                 return (
                                     <button
                                         key={idx}
                                         onClick={() => handleAnswer(option)}
-                                        disabled={currentPlayer?.currentAnswer !== undefined && currentPlayer?.currentAnswer !== null}
+                                        disabled={areOptionsDisabled}
                                         className={cn(
-                                            "p-6 rounded-xl text-lg font-medium transition-all transform hover:scale-[1.02] active:scale-[0.98]",
-                                            isSelected 
-                                                ? "bg-blue-600 text-white shadow-md ring-2 ring-blue-600 ring-offset-2 dark:ring-offset-zinc-950" 
-                                                : "bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-sm"
+                                            "p-6 rounded-xl text-lg font-medium transition-all transform",
+                                            !areOptionsDisabled && "hover:scale-[1.02] active:scale-[0.98]",
+                                            buttonClass
                                         )}
                                     >
                                         {option}
@@ -200,41 +233,65 @@ export default function RoomPage() {
                                 );
                             })
                         ) : (
-                            <>
-                                <button
-                                    onClick={() => handleAnswer(true)}
-                                    disabled={currentPlayer?.currentAnswer !== undefined && currentPlayer?.currentAnswer !== null}
-                                    className={cn(
-                                        "p-6 rounded-xl text-lg font-medium transition-all transform hover:scale-[1.02]",
-                                        currentPlayer?.currentAnswer === true
-                                            ? "bg-blue-600 text-white"
-                                            : "bg-white dark:bg-zinc-800 hover:bg-zinc-50"
-                                    )}
-                                >
-                                    Verdadeiro
-                                </button>
-                                <button
-                                    onClick={() => handleAnswer(false)}
-                                    disabled={currentPlayer?.currentAnswer !== undefined && currentPlayer?.currentAnswer !== null}
-                                    className={cn(
-                                        "p-6 rounded-xl text-lg font-medium transition-all transform hover:scale-[1.02]",
-                                        currentPlayer?.currentAnswer === false
-                                            ? "bg-blue-600 text-white"
-                                            : "bg-white dark:bg-zinc-800 hover:bg-zinc-50"
-                                    )}
-                                >
-                                    Falso
-                                </button>
-                            </>
+                            [true, false].map((val) => {
+                                const isSelected = currentPlayer?.currentAnswer === val;
+                                const isCorrect = val === room.questions[room.currentQuestionIndex].correctAnswer;
+                                
+                                let buttonClass = "bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-sm";
+                                if (room.isShowingResults) {
+                                    if (isCorrect) buttonClass = "bg-green-600 text-white shadow-md ring-2 ring-green-600 ring-offset-2 dark:ring-offset-zinc-950";
+                                    else if (isSelected) buttonClass = "bg-red-500 text-white opacity-80";
+                                    else buttonClass = "bg-zinc-100 dark:bg-zinc-800 opacity-50";
+                                } else if (isSelected) {
+                                    buttonClass = "bg-blue-600 text-white shadow-md ring-2 ring-blue-600 ring-offset-2 dark:ring-offset-zinc-950";
+                                } else if (areOptionsDisabled) {
+                                     buttonClass = "bg-zinc-200 dark:bg-zinc-800 opacity-50 cursor-not-allowed";
+                                }
+                                
+                                return (
+                                    <button
+                                        key={val.toString()}
+                                        onClick={() => handleAnswer(val)}
+                                        disabled={areOptionsDisabled}
+                                        className={cn(
+                                            "p-6 rounded-xl text-lg font-medium transition-all transform",
+                                            !areOptionsDisabled && "hover:scale-[1.02] active:scale-[0.98]",
+                                            buttonClass
+                                        )}
+                                    >
+                                        {val ? "Verdadeiro" : "Falso"}
+                                    </button>
+                                )
+                            })
                         )}
                      </div>
 
                      {/* Status Footer */}
-                     {currentPlayer?.currentAnswer !== undefined && currentPlayer?.currentAnswer !== null && (
-                         <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg animate-in fade-in slide-in-from-bottom-4">
-                             Resposta enviada! Aguardando os outros jogadores...
-                         </div>
-                     )}
+                     <div className="mt-8 space-y-4">
+                        {currentPlayer?.currentAnswer !== undefined && currentPlayer?.currentAnswer !== null && !room.isShowingResults && (
+                            <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg animate-in fade-in slide-in-from-bottom-4">
+                                Resposta enviada! Aguardando os outros jogadores...
+                            </div>
+                        )}
+                        
+                        {isTimeUp && !room.isShowingResults && (
+                            <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-lg animate-in fade-in slide-in-from-bottom-4">
+                                Tempo esgotado!
+                            </div>
+                        )}
+
+                        {showNextButton && (
+                             <button
+                                onClick={handleNextQuestion}
+                                className={cn(
+                                    "w-full sm:w-auto px-8 py-3 text-white rounded-full font-bold transition-colors flex items-center justify-center gap-2 mx-auto shadow-lg animate-bounce",
+                                    room.isShowingResults ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"
+                                )}
+                              >
+                                {room.isShowingResults ? "Próxima Pergunta" : "Ver Resultados"} <Play className="w-4 h-4" />
+                              </button>
+                        )}
+                     </div>
                 </div>
             ) : (
                 <div className="text-center text-zinc-500">Carregando pergunta...</div>

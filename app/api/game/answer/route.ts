@@ -1,5 +1,5 @@
 import { db } from "@/lib/firebase";
-import { Room, Player } from "@/types";
+import { Room } from "@/types";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { NextResponse } from "next/server";
 

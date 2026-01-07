@@ -52,11 +52,11 @@ export function ResultsView({ room, currentPlayer }: ResultsViewProps) {
             {top3[1] && (
                 <div className="flex flex-col items-center gap-2">
                     <UserAvatar playerName={top3[1].name} className="h-10 w-10 border-2 border-white dark:border-zinc-700 shadow-sm" />
-                    <span className="font-bold text-zinc-600 dark:text-zinc-300 text-sm">{top3[1].name}</span>
+                    <span className="font-bold text-zinc-600 dark:text-zinc-300 text-sm mb-2">{top3[1].name}</span>
                     <motion.div 
                         initial={{ height: 0 }}
                         animate={{ height: 100 }}
-                        className="w-20 bg-zinc-300 dark:bg-zinc-700 rounded-t-lg flex items-start justify-center pt-2 relative shadow-lg"
+                        className="w-20 bg-zinc-300 dark:bg-zinc-700 rounded-t-lg flex items-start justify-center pt-4 relative shadow-lg"
                     >
                         <span className="text-3xl font-bold text-zinc-500 dark:text-zinc-400 opacity-50">2</span>
                         <div className="absolute -top-3 w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-600 border-2 border-zinc-300 flex items-center justify-center">
@@ -69,11 +69,11 @@ export function ResultsView({ room, currentPlayer }: ResultsViewProps) {
             {top3[0] && (
                 <div className="flex flex-col items-center gap-2 z-10">
                     <Crown className="w-6 h-6 text-yellow-500 animate-bounce" />
-                    <span className="font-bold text-zinc-800 dark:text-white text-lg">{top3[0].name}</span>
+                    <span className="font-bold text-zinc-800 dark:text-white text-lg mb-2">{top3[0].name}</span>
                     <motion.div 
                         initial={{ height: 0 }}
                         animate={{ height: 140 }}
-                        className="w-24 bg-yellow-400 rounded-t-lg flex items-start justify-center pt-2 relative shadow-xl shadow-yellow-400/20"
+                        className="w-24 bg-yellow-400 rounded-t-lg flex items-start justify-center pt-4 relative shadow-xl shadow-yellow-400/20"
                     >
                         <span className="text-4xl font-bold text-yellow-600 opacity-50">1</span>
                         <div className="absolute -top-4 w-10 h-10 rounded-full bg-yellow-100 border-4 border-yellow-400 flex items-center justify-center shadow-sm">
@@ -85,11 +85,11 @@ export function ResultsView({ room, currentPlayer }: ResultsViewProps) {
 
             {top3[2] && (
                 <div className="flex flex-col items-center gap-2">
-                    <span className="font-bold text-zinc-600 dark:text-zinc-300 text-sm">{top3[2].name}</span>
+                    <span className="font-bold text-zinc-600 dark:text-zinc-300 text-sm mb-2">{top3[2].name}</span>
                     <motion.div 
                         initial={{ height: 0 }}
                         animate={{ height: 80 }}
-                        className="w-20 bg-amber-700/60 rounded-t-lg flex items-start justify-center pt-2 relative shadow-lg"
+                        className="w-20 bg-amber-700/60 rounded-t-lg flex items-start justify-center pt-4 relative shadow-lg"
                     >
                         <span className="text-3xl font-bold text-amber-900/50 opacity-50">3</span>
                         <div className="absolute -top-3 w-8 h-8 rounded-full bg-amber-100 border-2 border-amber-700/60 flex items-center justify-center">

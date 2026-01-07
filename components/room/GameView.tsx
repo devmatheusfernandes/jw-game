@@ -26,7 +26,7 @@ export function GameView({
 }: GameViewProps) {
   const { play } = useSound();
   const allAnswered = room.players.every(p => p.currentAnswer !== undefined && p.currentAnswer !== null);
-  const isTimeUp = room.settings.mode === 'time' && timeLeft === 0;
+  const isTimeUp = (room.settings.mode === 'time' || room.settings.mode === 'all_answered') && timeLeft === 0;
 
   // Tocar som de resultado quando revelado
   useEffect(() => {
@@ -40,12 +40,12 @@ export function GameView({
     }
   }, [room.isShowingResults, currentPlayer?.currentAnswer, room.questions, room.currentQuestionIndex, play]);
 
-  // Tocar som de contagem regressiva nos últimos 3 segundos
+  // Tocar som de contagem regressiva nos últimos 3 segundos (apenas modo tempo)
   useEffect(() => {
-    if (timeLeft !== null && timeLeft > 0 && timeLeft <= 3 && !room.isShowingResults) {
+    if (room.settings.mode === 'time' && timeLeft !== null && timeLeft > 0 && timeLeft <= 3 && !room.isShowingResults) {
         play('countdown');
     }
-  }, [timeLeft, room.isShowingResults, play]);
+  }, [timeLeft, room.isShowingResults, play, room.settings.mode]);
 
   const handleAnswer = (val: string | boolean) => {
     play('click');
@@ -70,21 +70,26 @@ export function GameView({
     >
          {/* Progress & Timer */}
         <div className="bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-            <div className="flex justify-between items-center text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">
+            <div className={cn(
+                "flex justify-between items-center text-xs font-bold text-zinc-400 uppercase tracking-wider",
+                room.settings.mode === 'time' && "mb-2"
+            )}>
                  <span>Questão {room.currentQuestionIndex + 1}/{room.questions.length}</span>
-                 {timeLeft !== null && <span className={cn(timeLeft < 10 ? "text-red-500" : "text-zinc-500")}>{timeLeft}s</span>}
+                 {timeLeft !== null && room.settings.mode === 'time' && <span className={cn(timeLeft < 10 ? "text-red-500" : "text-zinc-500")}>{timeLeft}s</span>}
             </div>
             {/* Timer Bar */}
-            <div className="h-2 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-                 <motion.div 
-                    className={cn(
-                        "h-full rounded-full transition-colors",
-                        timeLeft !== null && timeLeft < 10 ? "bg-red-500" : "bg-blue-500"
-                    )}
-                    animate={{ width: `${timePercentage}%` }}
-                    transition={{ ease: "linear", duration: 1 }}
-                 />
-            </div>
+            {room.settings.mode === 'time' && (
+                <div className="h-2 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                    <motion.div 
+                        className={cn(
+                            "h-full rounded-full transition-colors",
+                            timeLeft !== null && timeLeft < 10 ? "bg-red-500" : "bg-blue-500"
+                        )}
+                        animate={{ width: `${timePercentage}%` }}
+                        transition={{ ease: "linear", duration: 1 }}
+                    />
+                </div>
+            )}
         </div>
 
         {/* Question Card */}

@@ -121,7 +121,7 @@ export function CreateGameForm({ userId }: CreateGameFormProps) {
           deckId: selectedDeckId,
           settings: {
             mode: gameMode,
-            timeLimitPerQuestion: timeLimit,
+            timeLimitPerQuestion: gameMode === 'all_answered' ? 180 : timeLimit,
             showResultsAfterQuestion: true,
             dynamicScoring
           }

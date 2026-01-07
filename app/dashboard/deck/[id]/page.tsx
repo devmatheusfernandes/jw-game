@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 export default function DeckEditor() {
   const { user, loading: authLoading } = useAuth();
@@ -52,7 +53,7 @@ export default function DeckEditor() {
       const deck = await getDeckById(deckId);
       if (deck) {
         if (deck.ownerId !== "global" && deck.ownerId !== user?.uid) {
-          alert("Você não tem permissão para editar este deck");
+          toast.error("Você não tem permissão para editar este deck");
           router.push("/dashboard");
           return;
         }
@@ -60,7 +61,7 @@ export default function DeckEditor() {
         setDescription(deck.description);
         setQuestions(deck.questions);
       } else {
-        alert("Deck não encontrado");
+        toast.error("Deck não encontrado");
         router.push("/dashboard");
       }
     } catch (error) {
@@ -71,10 +72,19 @@ export default function DeckEditor() {
   }
 
   function handleSaveQuestion() {
-    if (!qText) return alert("Digite a pergunta");
+    if (!qText) {
+      toast.error("Digite a pergunta");
+      return;
+    }
     if (qType === "multiple_choice") {
-      if (qOptions.some(o => !o.trim())) return alert("Preencha todas as opções");
-      if (!qCorrect) return alert("Selecione a resposta correta");
+      if (qOptions.some(o => !o.trim())) {
+        toast.error("Preencha todas as opções");
+        return;
+      }
+      if (!qCorrect) {
+        toast.error("Selecione a resposta correta");
+        return;
+      }
     }
 
     const newQuestion: Question = {
@@ -128,8 +138,14 @@ export default function DeckEditor() {
   }
 
   async function handleSaveDeck() {
-    if (!title) return alert("Digite um título");
-    if (questions.length === 0) return alert("Adicione pelo menos uma pergunta");
+    if (!title) {
+      toast.error("Digite um título");
+      return;
+    }
+    if (questions.length === 0) {
+      toast.error("Adicione pelo menos uma pergunta");
+      return;
+    }
     if (!user) return;
 
     setSaving(true);
@@ -141,10 +157,11 @@ export default function DeckEditor() {
         ownerId: user.uid,
         isGlobal: false
       }, isNew ? undefined : deckId);
+      toast.success("Deck salvo com sucesso!");
       router.push("/dashboard");
     } catch (error) {
       console.error(error);
-      alert("Erro ao salvar deck");
+      toast.error("Erro ao salvar deck");
     } finally {
       setSaving(false);
     }

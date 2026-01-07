@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
@@ -45,8 +46,9 @@ export default function Dashboard() {
       await deleteDeck(deleteId);
       // Atualiza o estado local removendo o deck deletado
       setDecks((prev) => prev.filter(d => d.id !== deleteId));
+      toast.success("Deck excluído com sucesso");
     } catch (error) {
-      alert("Erro ao excluir deck");
+      toast.error("Erro ao excluir deck");
     } finally {
       setDeleteId(null);
     }

@@ -17,6 +17,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+import { toast } from "sonner";
+
 export default function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
   const [decks, setDecks] = useState<Deck[]>([]);
@@ -45,8 +47,9 @@ export default function AdminDashboard() {
     try {
       await deleteDeck(deleteId);
       setDecks((prev) => prev.filter(d => d.id !== deleteId));
+      toast.success("Deck excluído com sucesso");
     } catch (error) {
-      alert("Erro ao excluir deck");
+      toast.error("Erro ao excluir deck");
     } finally {
       setDeleteId(null);
     }

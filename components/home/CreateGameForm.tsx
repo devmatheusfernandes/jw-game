@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Loader2, Users, CheckCircle, Clock, Search } from "lucide-react";
 import { GameMode } from "@/types";
 import { Deck, getDecks } from "@/lib/decks";
+import { getCategories, Category } from "@/lib/categories";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -24,6 +25,8 @@ export function CreateGameForm({ userId }: CreateGameFormProps) {
   const [decks, setDecks] = useState<Deck[]>([]);
   const [selectedDeckId, setSelectedDeckId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadDecks() {
@@ -36,6 +39,14 @@ export function CreateGameForm({ userId }: CreateGameFormProps) {
     loadDecks();
   }, [userId]);
 
+  useEffect(() => {
+    async function loadCats() {
+      const cats = await getCategories();
+      setCategories(cats);
+    }
+    loadCats();
+  }, []);
+
   const filteredDecks = useMemo(() => {
     if (!searchTerm) return decks;
     const lowerTerm = searchTerm.toLowerCase();
@@ -46,6 +57,11 @@ export function CreateGameForm({ userId }: CreateGameFormProps) {
         (deck.categories || []).some(c => c.toLowerCase().includes(lowerTerm))
     );
   }, [decks, searchTerm]);
+
+  const categoryFilteredDecks = useMemo(() => {
+    if (!selectedCategory) return filteredDecks;
+    return filteredDecks.filter(d => (d.categories || []).includes(selectedCategory));
+  }, [filteredDecks, selectedCategory]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,10 +129,42 @@ export function CreateGameForm({ userId }: CreateGameFormProps) {
             Escolha o Tema
           </label>
           <span className="text-xs text-zinc-400">
-            {filteredDecks.length} {filteredDecks.length === 1 ? 'opção' : 'opções'}
+            {(selectedCategory ? categoryFilteredDecks.length : filteredDecks.length)} {(selectedCategory ? categoryFilteredDecks.length : filteredDecks.length) === 1 ? 'opção' : 'opções'}
           </span>
         </div>
         
+        {categories.length > 0 && (
+          <div className="flex gap-2 mb-2 overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-700">
+            <button
+              type="button"
+              onClick={() => setSelectedCategory(null)}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-xs font-semibold border transition-all",
+                !selectedCategory
+                  ? "border-blue-500 bg-blue-50/50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 ring-1 ring-blue-500"
+                  : "border-zinc-200 bg-white dark:bg-zinc-800/50 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400"
+              )}
+            >
+              Todas
+            </button>
+            {categories.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setSelectedCategory(c.name)}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-semibold border transition-all",
+                  selectedCategory === c.name
+                    ? "border-blue-500 bg-blue-50/50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 ring-1 ring-blue-500"
+                    : "border-zinc-200 bg-white dark:bg-zinc-800/50 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400"
+                )}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Search Input */}
         <div className="relative mb-2">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
@@ -129,9 +177,9 @@ export function CreateGameForm({ userId }: CreateGameFormProps) {
           />
         </div>
 
-        <div className="max-h-[180px] overflow-y-auto pr-1 space-y-2 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-700">
-          {filteredDecks.length > 0 ? (
-            filteredDecks.map((deck) => (
+        <div className="max-h-[180px] overflow-y-auto pr-1 space-y-2 no-scrollbar">
+          {(selectedCategory ? categoryFilteredDecks : filteredDecks).length > 0 ? (
+            (selectedCategory ? categoryFilteredDecks : filteredDecks).map((deck) => (
               <motion.div
                 key={deck.id}
                 whileTap={{ scale: 0.98 }}

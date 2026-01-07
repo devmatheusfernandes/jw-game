@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useRoom } from "@/hooks/useRoom";
 import { Loader2, AlertCircle, XCircle } from "lucide-react";
@@ -22,6 +22,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { SoundToggle } from "@/components/ui/SoundToggle";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { useSound } from "@/hooks/useSound";
 
 export default function RoomPage() {
   const params = useParams();
@@ -32,6 +35,18 @@ export default function RoomPage() {
   const [playerName, setPlayerName] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const { play } = useSound();
+  const prevStatusRef = useRef<string | null>(null);
+
+  // Sound Effects Triggers
+  useEffect(() => {
+    if (room?.status) {
+      if (prevStatusRef.current === 'waiting' && room.status === 'playing') {
+        play('start');
+      }
+      prevStatusRef.current = room.status;
+    }
+  }, [room?.status, play]);
 
   useEffect(() => {
     const storedId = localStorage.getItem("jw-game-player-id");
@@ -175,6 +190,8 @@ export default function RoomPage() {
             </div>
         </div>
         <div className="flex items-center gap-3">
+            <SoundToggle />
+            <ThemeToggle />
             {isHost && (room.status === 'playing' || room.status === 'waiting') && (
                 <AlertDialog>
                     <AlertDialogTrigger asChild>

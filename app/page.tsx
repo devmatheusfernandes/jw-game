@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,23 +10,23 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SavedSessionAlert } from "@/components/home/SavedSessionAlert";
 import { JoinGameForm } from "@/components/home/JoinGameForm";
 import { CreateGameForm } from "@/components/home/CreateGameForm";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export default function Home() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<'create' | 'join'>('join');
   
-  // Saved Session State
-  const [savedSession, setSavedSession] = useState<{ code: string, name: string } | null>(null);
-
-  useEffect(() => {
-    const code = localStorage.getItem("jw-game-room-code");
-    const name = localStorage.getItem("jw-game-player-name");
-    const id = localStorage.getItem("jw-game-player-id");
+  const [savedSession, setSavedSession] = useState<{ code: string, name: string } | null>(() => {
+    if (typeof window === "undefined") return null;
+    const code = window.localStorage.getItem("jw-game-room-code");
+    const name = window.localStorage.getItem("jw-game-player-name");
+    const id = window.localStorage.getItem("jw-game-player-id");
     if (code && name && id) {
-      setSavedSession({ code, name });
+      return { code, name };
     }
-  }, []);
+    return null;
+  });
 
   const handleReconnect = () => {
     if (savedSession) {
@@ -49,6 +49,7 @@ export default function Home() {
         
         {user ? (
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Link
               href="/dashboard"
               className="flex items-center justify-center w-10 h-10 rounded-full bg-white/80 dark:bg-zinc-800/50 backdrop-blur-md border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 shadow-sm hover:scale-105 transition-all"
@@ -65,13 +66,16 @@ export default function Home() {
             </button>
           </div>
         ) : (
-          <Link
-            href="/login"
-            className="flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md rounded-full text-indigo-600 dark:text-indigo-400 font-semibold shadow-sm border border-indigo-100 dark:border-zinc-700 hover:bg-white dark:hover:bg-zinc-800 transition-all text-sm"
-          >
-            <LogIn className="w-4 h-4" />
-            Login
-          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link
+              href="/login"
+              className="flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md rounded-full text-indigo-600 dark:text-indigo-400 font-semibold shadow-sm border border-indigo-100 dark:border-zinc-700 hover:bg-white dark:hover:bg-zinc-800 transition-all text-sm"
+            >
+              <LogIn className="w-4 h-4" />
+              Login
+            </Link>
+          </div>
         )}
       </header>
 
@@ -87,7 +91,7 @@ export default function Home() {
             <Gamepad2 className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-4xl font-extrabold tracking-tight text-zinc-900 dark:text-white">
-            JW <span className="text-blue-600 dark:text-blue-400">Game</span>
+            JW <span className="text-blue-600 dark:text-blue-400">GAME</span>
           </h1>
           <p className="text-zinc-500 dark:text-zinc-400 text-sm font-medium">
             Teste seu estudo pessoal

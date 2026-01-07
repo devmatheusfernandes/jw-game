@@ -3,6 +3,8 @@ import { Trophy, Home, Medal, Crown } from "lucide-react";
 import { Room, Player } from "@/types";
 import { useRouter } from "next/navigation";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { useSound } from "@/hooks/useSound";
+import { useEffect } from "react";
 
 interface ResultsViewProps {
   room: Room;
@@ -11,7 +13,13 @@ interface ResultsViewProps {
 
 export function ResultsView({ room, currentPlayer }: ResultsViewProps) {
   const router = useRouter();
+  const { play } = useSound();
   const sortedPlayers = [...room.players].sort((a, b) => b.score - a.score);
+  
+  useEffect(() => {
+    play('victory');
+  }, [play]);
+
   const winner = sortedPlayers[0];
   const isWinner = currentPlayer?.id === winner?.id;
 

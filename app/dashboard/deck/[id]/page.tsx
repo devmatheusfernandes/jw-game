@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export default function DeckEditor() {
   const { user, loading: authLoading } = useAuth();
@@ -207,14 +208,17 @@ export default function DeckEditor() {
                     {isNew ? "Criar Novo Deck" : "Editar Deck"}
                 </h1>
             </div>
-            <button
-                onClick={handleSaveDeck}
-                disabled={saving}
-                className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-green-600/20 hover:bg-green-700 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
-            >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                {saving ? "Salvando..." : "Salvar Deck"}
-            </button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <button
+                  onClick={handleSaveDeck}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-green-600/20 hover:bg-green-700 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
+              >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  {saving ? "Salvando..." : "Salvar Deck"}
+              </button>
+            </div>
         </div>
       </header>
 

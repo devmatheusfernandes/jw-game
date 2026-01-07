@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
@@ -109,13 +110,16 @@ export default function Dashboard() {
             </p>
           </div>
 
-          <Link
-            href="/dashboard/deck/new"
-            className="group flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/40 hover:scale-[1.02] active:scale-[0.98] font-medium"
-          >
-            <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-            Novo Deck
-          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link
+              href="/dashboard/deck/new"
+              className="group flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/40 hover:scale-[1.02] active:scale-[0.98] font-medium"
+            >
+              <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+              Novo Deck
+            </Link>
+          </div>
         </header>
 
         {/* Content Section */}

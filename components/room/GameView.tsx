@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { Play, Check } from "lucide-react";
 import { Room, Player } from "@/types";
 import { cn } from "@/lib/utils";
+import { useSound } from "@/hooks/useSound";
+import { useEffect } from "react";
 
 interface GameViewProps {
   room: Room;
@@ -22,8 +24,33 @@ export function GameView({
   onAnswer, 
   onNextQuestion 
 }: GameViewProps) {
+  const { play } = useSound();
   const allAnswered = room.players.every(p => p.currentAnswer !== undefined && p.currentAnswer !== null);
   const isTimeUp = room.settings.mode === 'time' && timeLeft === 0;
+
+  // Tocar som de resultado quando revelado
+  useEffect(() => {
+    if (room.isShowingResults && currentPlayer?.currentAnswer !== undefined) {
+        const isCorrect = currentPlayer.currentAnswer === room.questions[room.currentQuestionIndex].correctAnswer;
+        if (isCorrect) {
+            play('correct');
+        } else {
+            play('wrong');
+        }
+    }
+  }, [room.isShowingResults, currentPlayer?.currentAnswer, room.questions, room.currentQuestionIndex, play]);
+
+  // Tocar som de contagem regressiva nos últimos 3 segundos
+  useEffect(() => {
+    if (timeLeft !== null && timeLeft > 0 && timeLeft <= 3 && !room.isShowingResults) {
+        play('countdown');
+    }
+  }, [timeLeft, room.isShowingResults, play]);
+
+  const handleAnswer = (val: string | boolean) => {
+    play('click');
+    onAnswer(val);
+  };
 
   const showNextButton = isHost && (allAnswered || isTimeUp || room.isShowingResults);
   const areOptionsDisabled = (currentPlayer?.currentAnswer !== undefined && currentPlayer?.currentAnswer !== null) || isTimeUp || room.isShowingResults;
@@ -109,7 +136,7 @@ export function GameView({
                 return (
                     <motion.button
                         key={idx}
-                        onClick={() => onAnswer(val)}
+                        onClick={() => handleAnswer(val)}
                         disabled={areOptionsDisabled}
                         whileTap={!areOptionsDisabled ? { scale: 0.98 } : {}}
                         className={cn(

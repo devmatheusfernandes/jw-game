@@ -5,12 +5,11 @@ import { Room } from "@/types";
 
 export function useRoom(roomCode: string) {
   const [room, setRoom] = useState<Room | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(!!roomCode);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!roomCode) {
-      setLoading(false);
       return;
     }
 

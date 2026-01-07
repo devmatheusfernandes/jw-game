@@ -5,7 +5,7 @@ import { getDeckById, saveDeck } from "@/lib/decks";
 import { getCategories, ensureCategories, Category } from "@/lib/categories";
 import { Question } from "@/types";
 import { generateUUID } from "@/lib/utils";
-import { ArrowLeft, Plus, Save, Trash2, Clock, CheckCircle, X, ShieldAlert, Edit, Type, Check, Loader2, AlertTriangle, Layers } from "lucide-react";
+import { ArrowLeft, Plus, Save, Trash2, Clock, CheckCircle, X, ShieldAlert, Edit, Type, Check, Loader2, AlertTriangle, Layers, Upload } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -138,6 +138,63 @@ export default function AdminDeckEditor() {
     setQOptions(["", "", "", ""]);
     setQCorrect("");
     setQTime(30);
+  }
+
+  function handleImportJson(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        if (!Array.isArray(json)) {
+          toast.error("O arquivo deve conter uma lista de perguntas");
+          return;
+        }
+
+        const newQuestions: Question[] = [];
+        let errorCount = 0;
+
+        json.forEach((item: any) => {
+           // Validação básica
+           if (!item.text || !item.type || item.correctAnswer === undefined) {
+             errorCount++;
+             return;
+           }
+           
+           if (item.type === 'multiple_choice' && (!item.options || !Array.isArray(item.options))) {
+             errorCount++;
+             return;
+           }
+
+           newQuestions.push({
+             id: generateUUID(),
+             text: item.text,
+             type: item.type,
+             options: item.options || [],
+             correctAnswer: item.correctAnswer,
+             timeLimit: item.timeLimit || 30
+           });
+        });
+
+        if (newQuestions.length > 0) {
+            setQuestions([...questions, ...newQuestions]);
+            toast.success(`${newQuestions.length} perguntas importadas!`);
+        }
+        
+        if (errorCount > 0) {
+            toast.warning(`${errorCount} perguntas ignoradas por formato inválido.`);
+        }
+        
+      } catch (err) {
+        console.error(err);
+        toast.error("Erro ao ler arquivo JSON");
+      }
+    };
+    reader.readAsText(file);
+    // Reset input
+    e.target.value = '';
   }
 
   async function handleSaveDeck() {
@@ -499,6 +556,16 @@ export default function AdminDeckEditor() {
                Lista de Perguntas 
                <span className="text-sm font-bold text-white bg-red-400 dark:bg-red-700 px-2 py-0.5 rounded-full">{questions.length}</span>
             </h2>
+            <label className="flex items-center gap-2 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg cursor-pointer transition-colors text-xs font-bold text-zinc-600 dark:text-zinc-300">
+                <Upload className="w-4 h-4" />
+                Importar JSON
+                <input 
+                    type="file" 
+                    accept=".json" 
+                    className="hidden" 
+                    onChange={handleImportJson} 
+                />
+            </label>
           </div>
           
           <div className="space-y-3 min-h-[100px]">

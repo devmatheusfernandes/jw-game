@@ -3,12 +3,24 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useRoom } from "@/hooks/useRoom";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, XCircle } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { LobbyView } from "@/components/room/LobbyView";
 import { GameView } from "@/components/room/GameView";
 import { ResultsView } from "@/components/room/ResultsView";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 
 export default function RoomPage() {
   const params = useParams();
@@ -99,6 +111,21 @@ export default function RoomPage() {
     }
   };
 
+  const handleFinishGame = async () => {
+    if (!playerId) return;
+    try {
+      await fetch("/api/game/finish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, hostId: playerId }),
+      });
+      toast.success("Jogo finalizado!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao finalizar o jogo");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-[100dvh] items-center justify-center bg-zinc-50 dark:bg-zinc-950">
@@ -146,11 +173,47 @@ export default function RoomPage() {
                 <span className="text-sm font-bold text-zinc-900 dark:text-white leading-none font-mono">{room.code}</span>
             </div>
         </div>
-        <div className="flex items-center gap-3 bg-zinc-100/50 dark:bg-zinc-800/50 px-3 py-1.5 rounded-full border border-zinc-200/50 dark:border-zinc-700">
-            <div className="h-6 w-6 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-xs">
-                {playerName?.[0]?.toUpperCase()}
+        <div className="flex items-center gap-3">
+            {isHost && (room.status === 'playing' || room.status === 'waiting') && (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" className="hidden sm:flex h-8">
+                            <XCircle className="w-4 h-4 mr-2" />
+                            {room.status === 'waiting' ? 'Encerrar' : 'Finalizar'}
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="icon" className="sm:hidden h-8 w-8">
+                            <XCircle className="w-4 h-4" />
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>
+                                {room.status === 'waiting' ? 'Encerrar a sala?' : 'Finalizar o jogo?'}
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                                {room.status === 'waiting' 
+                                    ? 'Tem certeza que deseja encerrar a sala? Todos os jogadores serão desconectados.' 
+                                    : 'Tem certeza que deseja finalizar o jogo agora? Todos os jogadores serão levados para a tela de resultados.'}
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleFinishGame} className="bg-red-600 hover:bg-red-700">
+                                {room.status === 'waiting' ? 'Encerrar' : 'Finalizar'}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
+
+            <div className="flex items-center gap-3 bg-zinc-100/50 dark:bg-zinc-800/50 px-3 py-1.5 rounded-full border border-zinc-200/50 dark:border-zinc-700">
+                <div className="h-6 w-6 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-xs">
+                    {playerName?.[0]?.toUpperCase()}
+                </div>
+                <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 max-w-[80px] truncate">{playerName}</span>
             </div>
-            <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 max-w-[80px] truncate">{playerName}</span>
         </div>
       </header>
 

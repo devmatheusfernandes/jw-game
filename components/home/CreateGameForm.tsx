@@ -42,7 +42,8 @@ export function CreateGameForm({ userId }: CreateGameFormProps) {
     return decks.filter(
       (deck) =>
         deck.title.toLowerCase().includes(lowerTerm) ||
-        deck.description.toLowerCase().includes(lowerTerm)
+        deck.description.toLowerCase().includes(lowerTerm) ||
+        (deck.categories || []).some(c => c.toLowerCase().includes(lowerTerm))
     );
   }, [decks, searchTerm]);
 
@@ -153,6 +154,20 @@ export function CreateGameForm({ userId }: CreateGameFormProps) {
                 <p className="text-xs text-zinc-500 line-clamp-1">
                   {deck.description}
                 </p>
+                {deck.categories && deck.categories.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {deck.categories.slice(0, 3).map(cat => (
+                      <span key={cat} className="text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 px-2 py-1 rounded dark:bg-blue-900/30 dark:text-blue-300">
+                        {cat}
+                      </span>
+                    ))}
+                    {deck.categories.length > 3 && (
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-zinc-100 text-zinc-600 px-2 py-1 rounded dark:bg-zinc-800 dark:text-zinc-400">
+                        +{deck.categories.length - 3}
+                      </span>
+                    )}
+                  </div>
+                )}
                 <div className="mt-2">
                   {deck.isGlobal ? (
                     <span className="text-[10px] font-bold uppercase tracking-wider bg-zinc-100 text-zinc-600 px-2 py-1 rounded dark:bg-zinc-800 dark:text-zinc-400">

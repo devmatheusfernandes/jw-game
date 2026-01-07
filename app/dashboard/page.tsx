@@ -174,6 +174,20 @@ export default function Dashboard() {
                         <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2 h-10 leading-relaxed">
                             {deck.description || "Sem descrição definida."}
                         </p>
+                        {deck.categories && deck.categories.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {deck.categories.slice(0, 3).map((cat) => (
+                              <span key={cat} className="text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 px-2 py-1 rounded dark:bg-indigo-900/30 dark:text-indigo-300">
+                                {cat}
+                              </span>
+                            ))}
+                            {deck.categories.length > 3 && (
+                              <span className="text-[10px] font-bold uppercase tracking-wider bg-zinc-100 text-zinc-600 px-2 py-1 rounded dark:bg-zinc-800 dark:text-zinc-400">
+                                +{deck.categories.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
                     </div>
                     
                     <div className="flex items-center justify-between pt-4 border-t border-zinc-100 dark:border-zinc-800/50">

@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { getDeckById, saveDeck } from "@/lib/decks";
+import { getCategories, ensureCategories, Category } from "@/lib/categories";
 import { Question } from "@/types";
 import { generateUUID } from "@/lib/utils";
 import { ArrowLeft, Plus, Save, Trash2, Clock, CheckCircle, X, ShieldAlert, Edit, Type, Check, Loader2, AlertTriangle, Layers } from "lucide-react";
@@ -28,6 +29,9 @@ export default function AdminDeckEditor() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [categoryInput, setCategoryInput] = useState("");
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
 
   // Question Editor State
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
@@ -43,6 +47,14 @@ export default function AdminDeckEditor() {
     }
   }, [deckId, isNew, user]);
 
+  useEffect(() => {
+    async function loadCategories() {
+      const cats = await getCategories();
+      setAllCategories(cats);
+    }
+    loadCategories();
+  }, []);
+
   async function loadDeck() {
     try {
       const deck = await getDeckById(deckId);
@@ -50,6 +62,7 @@ export default function AdminDeckEditor() {
         setTitle(deck.title);
         setDescription(deck.description);
         setQuestions(deck.questions);
+        setSelectedCategories(deck.categories || []);
       } else {
         toast.error("Deck não encontrado");
         router.push("/admin");
@@ -139,12 +152,14 @@ export default function AdminDeckEditor() {
 
     setSaving(true);
     try {
+      await ensureCategories(selectedCategories, "global");
       await saveDeck({
         title,
         description,
         questions,
         ownerId: "global", 
-        isGlobal: true   
+        isGlobal: true,
+        categories: selectedCategories
       }, isNew ? undefined : deckId);
       toast.success("Deck global salvo com sucesso!");
       router.push("/admin");
@@ -234,6 +249,69 @@ export default function AdminDeckEditor() {
                     className="w-full px-4 py-3 mt-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all min-h-[80px]"
                     placeholder="Descreva o tema deste deck..."
                 />
+            </div>
+            <div>
+                <label className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400 ml-1">Categorias</label>
+                <div className="mt-1 space-y-2">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={categoryInput}
+                      onChange={e => setCategoryInput(e.target.value)}
+                      placeholder="Digite para adicionar ou selecione sugeridas..."
+                      className="w-full h-10 px-4 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm"
+                      onKeyDown={e => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const name = categoryInput.trim();
+                          if (name && !selectedCategories.includes(name)) {
+                            setSelectedCategories([...selectedCategories, name]);
+                          }
+                          setCategoryInput("");
+                        }
+                      }}
+                    />
+                    {categoryInput && (
+                      <div className="absolute z-20 mt-1 w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-sm max-h-40 overflow-y-auto">
+                        {allCategories
+                          .filter(c => c.name.toLowerCase().includes(categoryInput.toLowerCase()))
+                          .filter(c => !selectedCategories.includes(c.name))
+                          .slice(0, 6)
+                          .map(c => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedCategories([...selectedCategories, c.name]);
+                                setCategoryInput("");
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                            >
+                              {c.name}
+                            </button>
+                          ))
+                        }
+                        {allCategories.filter(c => c.name.toLowerCase().includes(categoryInput.toLowerCase())).length === 0 && (
+                          <div className="px-3 py-2 text-xs text-zinc-400">Pressione Enter para adicionar: {categoryInput}</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedCategories.map(cat => (
+                      <span key={cat} className="inline-flex items-center gap-2 text-xs px-2 py-1 rounded-full bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300 border border-red-200 dark:border-red-800">
+                        {cat}
+                        <button
+                          type="button"
+                          className="text-red-600 dark:text-red-400"
+                          onClick={() => setSelectedCategories(selectedCategories.filter(c => c !== cat))}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
             </div>
           </div>
         </motion.div>

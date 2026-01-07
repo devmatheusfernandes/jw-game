@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { Deck, getDeckById, saveDeck } from "@/lib/decks";
+import { getCategories, ensureCategories, Category } from "@/lib/categories";
 import { Question } from "@/types";
 import { generateUUID } from "@/lib/utils";
 import { ArrowLeft, Plus, Save, Trash2, Clock, CheckCircle, X, Edit, Layers, Type, Check, Loader2, AlertCircle } from "lucide-react";
@@ -28,6 +29,9 @@ export default function DeckEditor() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [categoryInput, setCategoryInput] = useState("");
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
 
   // Question Editor State
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
@@ -48,6 +52,14 @@ export default function DeckEditor() {
     }
   }, [deckId, isNew, user, authLoading]);
 
+  useEffect(() => {
+    async function loadCategories() {
+      const cats = await getCategories();
+      setAllCategories(cats);
+    }
+    loadCategories();
+  }, []);
+
   async function loadDeck() {
     try {
       const deck = await getDeckById(deckId);
@@ -60,6 +72,7 @@ export default function DeckEditor() {
         setTitle(deck.title);
         setDescription(deck.description);
         setQuestions(deck.questions);
+        setSelectedCategories(deck.categories || []);
       } else {
         toast.error("Deck não encontrado");
         router.push("/dashboard");
@@ -150,12 +163,14 @@ export default function DeckEditor() {
 
     setSaving(true);
     try {
+      await ensureCategories(selectedCategories, user.uid);
       await saveDeck({
         title,
         description,
         questions,
         ownerId: user.uid,
-        isGlobal: false
+        isGlobal: false,
+        categories: selectedCategories
       }, isNew ? undefined : deckId);
       toast.success("Deck salvo com sucesso!");
       router.push("/dashboard");
@@ -215,28 +230,91 @@ export default function DeckEditor() {
              <Layers className="w-5 h-5" />
              <h2 className="font-bold text-lg">Informações do Deck</h2>
           </div>
-          <div className="space-y-4">
-            <div>
-                <label className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400 ml-1">Título do Deck</label>
-                <input
-                    type="text"
-                    value={title}
-                    onChange={e => setTitle(e.target.value)}
-                    className="w-full h-12 px-4 mt-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium text-lg placeholder:font-normal"
-                    placeholder="Ex: Heróis da Bíblia"
-                />
-            </div>
-            <div>
-                <label className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400 ml-1">Descrição</label>
-                <textarea
-                    value={description}
-                    onChange={e => setDescription(e.target.value)}
-                    className="w-full px-4 py-3 mt-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all min-h-[80px]"
-                    placeholder="Sobre o que é este quiz?"
-                />
-            </div>
+        <div className="space-y-4">
+          <div>
+              <label className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400 ml-1">Título do Deck</label>
+              <input
+                  type="text"
+                  value={title}
+                  onChange={e => setTitle(e.target.value)}
+                  className="w-full h-12 px-4 mt-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-medium text-lg placeholder:font-normal"
+                  placeholder="Ex: Heróis da Bíblia"
+              />
           </div>
-        </motion.div>
+          <div>
+              <label className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400 ml-1">Descrição</label>
+              <textarea
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  className="w-full px-4 py-3 mt-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all min-h-[80px]"
+                  placeholder="Sobre o que é este quiz?"
+              />
+          </div>
+          <div>
+              <label className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400 ml-1">Categorias</label>
+              <div className="mt-1 space-y-2">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={categoryInput}
+                    onChange={e => setCategoryInput(e.target.value)}
+                    placeholder="Digite para adicionar ou selecione sugeridas..."
+                    className="w-full h-10 px-4 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm"
+                    onKeyDown={e => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const name = categoryInput.trim();
+                        if (name && !selectedCategories.includes(name)) {
+                          setSelectedCategories([...selectedCategories, name]);
+                        }
+                        setCategoryInput("");
+                      }
+                    }}
+                  />
+                  {categoryInput && (
+                    <div className="absolute z-20 mt-1 w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-sm max-h-40 overflow-y-auto">
+                      {allCategories
+                        .filter(c => c.name.toLowerCase().includes(categoryInput.toLowerCase()))
+                        .filter(c => !selectedCategories.includes(c.name))
+                        .slice(0, 6)
+                        .map(c => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedCategories([...selectedCategories, c.name]);
+                              setCategoryInput("");
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                          >
+                            {c.name}
+                          </button>
+                        ))
+                      }
+                      {allCategories.filter(c => c.name.toLowerCase().includes(categoryInput.toLowerCase())).length === 0 && (
+                        <div className="px-3 py-2 text-xs text-zinc-400">Pressione Enter para adicionar: {categoryInput}</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {selectedCategories.map(cat => (
+                    <span key={cat} className="inline-flex items-center gap-2 text-xs px-2 py-1 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                      {cat}
+                      <button
+                        type="button"
+                        className="text-indigo-600 dark:text-indigo-400"
+                        onClick={() => setSelectedCategories(selectedCategories.filter(c => c !== cat))}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+          </div>
+        </div>
+      </motion.div>
 
         {/* Question Editor Card */}
         <motion.div 

@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     }
 
     const currentQuestion = roomData.questions[roomData.currentQuestionIndex];
-    let updates: any = {};
+    let updates: Partial<Room> = {};
 
     if (!roomData.isShowingResults) {
         // Step 1: Show Results
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
         }
     }
 
-    await updateDoc(roomRef, updates);
+    await updateDoc(roomRef, updates as Record<string, unknown>);
 
     return NextResponse.json({ success: true, isShowingResults: updates.isShowingResults });
   } catch (error) {

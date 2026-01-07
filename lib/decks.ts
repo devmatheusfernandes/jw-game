@@ -10,6 +10,7 @@ export interface Deck {
   ownerId?: string;
   isGlobal?: boolean;
   createdAt?: number;
+  categories?: string[];
 }
 
 export async function getDecks(userId?: string): Promise<Deck[]> {

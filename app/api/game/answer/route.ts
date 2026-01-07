@@ -48,6 +48,7 @@ export async function POST(req: Request) {
 
     // Record answer
     player.currentAnswer = answer;
+    player.answerTimestamp = Date.now();
     
     // Check correctness (simple check, ideally do this on "reveal" or accumulate score)
     // For now, let's just store the answer. Scoring happens at the end of question time or when all answer.

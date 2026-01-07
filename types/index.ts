@@ -10,6 +10,7 @@ export interface Player {
   avatar?: string;
   connected: boolean;
   currentAnswer?: string | boolean | null; // For the current question
+  answerTimestamp?: number; // When the player answered
 }
 
 export interface Question {
@@ -25,6 +26,7 @@ export interface GameSettings {
   mode: GameMode;
   timeLimitPerQuestion: number; // Default time limit in seconds
   showResultsAfterQuestion: boolean;
+  dynamicScoring?: boolean;
 }
 
 export interface Room {

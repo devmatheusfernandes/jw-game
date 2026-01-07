@@ -35,16 +35,43 @@ export async function POST(req: Request) {
         };
     } else {
         // Step 2: Move to Next Question (and calculate scores)
+        if (!currentQuestion) {
+             // Emergency recovery: if index is bad, just finish or reset
+             console.error("Current question undefined at index", roomData.currentQuestionIndex);
+        }
+
         const players = roomData.players.map(player => {
             let newScore = player.score;
-            if (player.currentAnswer === currentQuestion.correctAnswer) {
-                newScore += 10; // Simple scoring
+            // Only calculate if currentQuestion exists
+            if (currentQuestion && player.currentAnswer === currentQuestion.correctAnswer) {
+                let points = 10;
+
+                if (roomData.settings.dynamicScoring && roomData.questionStartTime && player.answerTimestamp) {
+                    const limitSeconds = currentQuestion.timeLimit || roomData.settings.timeLimitPerQuestion || 30;
+                    const timeLimit = limitSeconds * 1000;
+                    const elapsed = player.answerTimestamp - roomData.questionStartTime;
+                    
+                    // Ensure elapsed is valid
+                    const safeElapsed = Math.max(0, Math.min(elapsed, timeLimit));
+                    
+                    // Calculate ratio (1.0 at start, 0.0 at end)
+                    const ratio = 1 - (safeElapsed / timeLimit);
+                    
+                    // Points from 1000 down to 100
+                    points = Math.round(100 + (900 * ratio));
+                    
+                    if (isNaN(points)) points = 10; // Safety fallback
+                }
+
+                newScore += points;
             }
-            return {
+            const updatedPlayer = {
                 ...player,
                 score: newScore,
-                currentAnswer: null // Reset for next question
+                currentAnswer: null, // Reset for next question
             };
+            delete updatedPlayer.answerTimestamp;
+            return updatedPlayer;
         });
 
         const nextIndex = roomData.currentQuestionIndex + 1;
@@ -67,8 +94,8 @@ export async function POST(req: Request) {
     await updateDoc(roomRef, updates as Record<string, unknown>);
 
     return NextResponse.json({ success: true, isShowingResults: updates.isShowingResults });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error advancing game:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }
 }

@@ -61,7 +61,7 @@ export default function RoomPage() {
 
   // Timer Logic
   useEffect(() => {
-    if (room?.status === 'playing' && room.questionStartTime && room.settings.timeLimitPerQuestion) {
+    if (room?.status === 'playing' && room.questionStartTime && room.settings.timeLimitPerQuestion && !room.isShowingResults) {
       const interval = setInterval(() => {
         const elapsed = (Date.now() - room.questionStartTime!) / 1000;
         const remaining = Math.max(0, Math.ceil(room.settings.timeLimitPerQuestion - elapsed));
@@ -73,7 +73,7 @@ export default function RoomPage() {
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [room?.status, room?.questionStartTime, room?.settings.timeLimitPerQuestion]);
+  }, [room?.status, room?.questionStartTime, room?.settings.timeLimitPerQuestion, room?.isShowingResults]);
 
   const handleStartGame = async () => {
     if (!playerId) return;
@@ -116,14 +116,19 @@ export default function RoomPage() {
   const handleNextQuestion = async () => {
     if (!playerId) return;
     try {
-      await fetch("/api/game/next", {
+      const res = await fetch("/api/game/next", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, hostId: playerId }),
       });
-    } catch (err) {
+      
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Erro ao avançar");
+      }
+    } catch (err: any) {
       console.error(err);
-      toast.error("Erro ao avançar pergunta");
+      toast.error(err.message || "Erro ao avançar pergunta");
     }
   };
 

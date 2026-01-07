@@ -102,7 +102,7 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white dark:bg-zinc-900/90 backdrop-blur-xl rounded-3xl shadow-xl border border-zinc-200/60 dark:border-zinc-800 overflow-hidden ring-1 ring-zinc-900/5"
+          className="mb-12 bg-white dark:bg-zinc-900/90 backdrop-blur-xl rounded-3xl shadow-xl border border-zinc-200/60 dark:border-zinc-800 overflow-hidden ring-1 ring-zinc-900/5"
         >
           {/* Custom Tabs */}
           <div className="flex p-2 gap-2 bg-zinc-50/50 dark:bg-zinc-950/50 border-b border-zinc-100 dark:border-zinc-800/50">

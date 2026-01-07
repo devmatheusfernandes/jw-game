@@ -272,7 +272,7 @@ export default function DeckEditor() {
                     }}
                   />
                   {categoryInput && (
-                    <div className="absolute z-20 mt-1 w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-sm max-h-40 overflow-y-auto">
+                    <div className="z-20 mt-1 w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-sm max-h-40 overflow-y-auto">
                       {allCategories
                         .filter(c => c.name.toLowerCase().includes(categoryInput.toLowerCase()))
                         .filter(c => !selectedCategories.includes(c.name))

@@ -21,6 +21,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 
 export default function RoomPage() {
   const params = useParams();
@@ -209,9 +210,7 @@ export default function RoomPage() {
             )}
 
             <div className="flex items-center gap-3 bg-zinc-100/50 dark:bg-zinc-800/50 px-3 py-1.5 rounded-full border border-zinc-200/50 dark:border-zinc-700">
-                <div className="h-6 w-6 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-xs">
-                    {playerName?.[0]?.toUpperCase()}
-                </div>
+                <UserAvatar playerName={playerName || ""} className="h-6 w-6" />
                 <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 max-w-[80px] truncate">{playerName}</span>
             </div>
         </div>

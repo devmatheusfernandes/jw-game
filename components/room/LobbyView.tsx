@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Check, Copy, Users, Play } from "lucide-react";
 import { Room } from "@/types";
 import { toast } from "sonner";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 
 interface LobbyViewProps {
   room: Room;
@@ -71,9 +72,7 @@ export function LobbyView({ room, isHost, onStartGame }: LobbyViewProps) {
                         key={player.id} 
                         className="flex items-center gap-3 p-3 rounded-xl bg-white/60 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 shadow-sm"
                     >
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                            {player.name[0].toUpperCase()}
-                        </div>
+                        <UserAvatar playerName={player.name} className="h-8 w-8" />
                         <div className="flex flex-col overflow-hidden">
                             <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 truncate">{player.name}</span>
                             {player.isHost && <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase">Anfitrião</span>}

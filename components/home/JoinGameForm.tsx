@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Loader2, Play } from "lucide-react";
 import { toast } from "sonner";
+import { UserAvatar } from "../ui/UserAvatar";
 
 export function JoinGameForm() {
   const router = useRouter();
@@ -50,6 +51,11 @@ export function JoinGameForm() {
       className="space-y-5"
     >
       <div className="space-y-1.5">
+        {joinName && (
+            <div className="flex justify-center mb-2">
+                <UserAvatar playerName={joinName} className="w-16 h-16 shadow-lg" />
+            </div>
+        )}
         <label htmlFor="joinName" className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 ml-1">
           Seu Apelido
         </label>

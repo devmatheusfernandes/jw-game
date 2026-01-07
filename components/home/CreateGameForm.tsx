@@ -9,6 +9,7 @@ import { Deck, getDecks } from "@/lib/decks";
 import { getCategories, Category } from "@/lib/categories";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { UserAvatar } from "../ui/UserAvatar";
 
 interface CreateGameFormProps {
   userId?: string;
@@ -183,8 +184,14 @@ export function CreateGameForm({ userId }: CreateGameFormProps) {
               className="w-full space-y-4"
             >
               <div className="text-center space-y-2 mb-8 mt-4">
-                <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto text-indigo-600 dark:text-indigo-400">
-                    <Users className="w-6 h-6" />
+                <div className="mx-auto w-fit">
+                    {hostName ? (
+                        <UserAvatar playerName={hostName} className="w-16 h-16 shadow-lg" />
+                    ) : (
+                        <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                            <Users className="w-8 h-8" />
+                        </div>
+                    )}
                 </div>
                 <h3 className="text-xl font-bold text-zinc-900 dark:text-white">Quem será o host?</h3>
                 <p className="text-sm text-zinc-500">Digite como você quer ser chamado na sala.</p>

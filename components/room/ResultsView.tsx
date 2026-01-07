@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Trophy, Home, Medal, Crown } from "lucide-react";
 import { Room, Player } from "@/types";
 import { useRouter } from "next/navigation";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 
 interface ResultsViewProps {
   room: Room;
@@ -42,6 +43,7 @@ export function ResultsView({ room, currentPlayer }: ResultsViewProps) {
         <div className="flex justify-center items-end gap-4 min-h-[160px] mb-8">
             {top3[1] && (
                 <div className="flex flex-col items-center gap-2">
+                    <UserAvatar playerName={top3[1].name} className="h-10 w-10 border-2 border-white dark:border-zinc-700 shadow-sm" />
                     <span className="font-bold text-zinc-600 dark:text-zinc-300 text-sm">{top3[1].name}</span>
                     <motion.div 
                         initial={{ height: 0 }}
@@ -97,6 +99,7 @@ export function ResultsView({ room, currentPlayer }: ResultsViewProps) {
                     <div key={player.id} className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
                         <div className="flex items-center gap-3">
                             <span className="w-6 text-center text-zinc-400 font-mono text-sm">#{idx + 4}</span>
+                            <UserAvatar playerName={player.name} className="h-8 w-8" />
                             <span className="font-medium text-zinc-700 dark:text-zinc-200">{player.name}</span>
                         </div>
                         <span className="font-bold text-zinc-500">{player.score} pts</span>

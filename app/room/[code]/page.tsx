@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useRoom } from "@/hooks/useRoom";
-import { Loader2, AlertCircle, XCircle } from "lucide-react";
+import { Loader2, AlertCircle, XCircle, Crown } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { LobbyView } from "@/components/room/LobbyView";
@@ -233,7 +233,10 @@ export default function RoomPage() {
 
             <div className="flex items-center gap-3 bg-zinc-100/50 dark:bg-zinc-800/50 px-3 py-1.5 rounded-full border border-zinc-200/50 dark:border-zinc-700">
                 <UserAvatar playerName={playerName || ""} className="h-6 w-6" />
-                <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 max-w-[80px] truncate">{playerName}</span>
+                <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 max-w-[80px] truncate flex items-center gap-1">
+                    {isHost && <Crown className="w-3 h-3 text-yellow-500" />}
+                    {playerName}
+                </span>
             </div>
         </div>
       </header>

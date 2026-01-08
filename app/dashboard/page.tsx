@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { Deck, deleteDeck, getUserDecks } from "@/lib/decks";
-import { Plus, Edit, Trash2, BookOpen, Loader2, ArrowLeft, LayoutGrid, Search } from "lucide-react";
+import { Plus, Edit, Trash2, BookOpen, Loader2, ArrowLeft, LayoutGrid, Map, Trophy, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -123,6 +123,48 @@ export default function Dashboard() {
         </header>
 
         {/* Content Section */}
+        
+        {/* Journey Card Section */}
+        <div className="mb-8">
+            <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
+                <Map className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                Modo Jornada
+            </h2>
+            <Link href="/journey">
+                <motion.div 
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    className="group relative overflow-hidden bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl p-6 shadow-lg shadow-indigo-500/20 text-white cursor-pointer"
+                >
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                    <div className="relative z-10 flex items-start justify-between">
+                        <div>
+                            <h3 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                                Jornada Bíblica
+                                <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full font-medium">Campanha</span>
+                            </h3>
+                            <p className="text-indigo-100 max-w-lg text-sm sm:text-base leading-relaxed">
+                                Aventure-se através de fases desafiadoras, conquiste badges exclusivas e teste seus conhecimentos bíblicos em nossa campanha principal.
+                            </p>
+                        </div>
+                        <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm hidden sm:block">
+                            <Trophy className="w-8 h-8 text-yellow-300" />
+                        </div>
+                    </div>
+                    <div className="mt-6 flex items-center gap-2 text-sm font-medium text-indigo-100 group-hover:text-white transition-colors">
+                        Continuar Jornada <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                </motion.div>
+            </Link>
+        </div>
+
+        <div className="flex items-center justify-between mb-4">
+             <h2 className="text-xl font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
+                <LayoutGrid className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                Seus Decks Personalizados
+            </h2>
+        </div>
+
         {decks.length === 0 ? (
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}

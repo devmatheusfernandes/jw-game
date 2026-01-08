@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Lock, Check, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -257,7 +257,7 @@ function DeckNode({ isCompleted, isLocked, isActive, color, onClick }: DeckNodeP
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          className="absolute -top-14 z-30 pointer-events-none"
+          className="absolute -top-14 z-99 pointer-events-none"
         >
           <div className="bg-white dark:bg-zinc-800 text-zinc-800 dark:text-white px-3 py-1.5 rounded-xl font-bold text-sm shadow-xl border-2 border-zinc-100 dark:border-zinc-700 whitespace-nowrap uppercase tracking-wider">
             Começar

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Check, X, ArrowRight, Flag, Heart } from "lucide-react";
+import { Check, X, Flag } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useJourney } from "@/hooks/useJourney";
 import { useSound } from "@/hooks/useSound";
@@ -12,6 +12,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Question } from "@/types";
 import { Badge } from "@/types/journey";
 import { ComboIndicator } from "./ComboIndicator";
+
+// Frases de Motivação (Acertos/Combo)
+const SUCCESS_MESSAGES = [
+  "Incrível!", "Continue assim!", "Você está indo muito bem!", "Imparável!",
+  "Excelente progresso!", "Brilhante!", "Sua dedicação é exemplar!",
+  "Nada te segura!", "Fantástico!", "Maravilhoso!"
+];
+
+// Frases de Incentivo (Erros/Perda de Combo)
+const ENCOURAGEMENT_MESSAGES = [
+  "Não desista!", "Aprender faz parte do processo.", "Tente novamente na próxima!",
+  "Continue se esforçando!", "O importante é não parar.", "Revise e tente de novo.",
+  "Cada erro é um aprendizado.", "Mantenha o foco!", "Não desanime!",
+  "Você consegue!", "Respire fundo e continue.", "A persistência traz resultados.",
+  "Estamos torcendo por você!", "Quase lá!"
+];
 
 interface JourneyGameViewProps {
   deckId: string;
@@ -45,7 +61,7 @@ export function JourneyGameView({
   const [earnedBadges, setEarnedBadges] = useState<Badge[]>([]);
   const [correctCount, setCorrectCount] = useState(0);
   const [comboCount, setComboCount] = useState(0);
-
+  const [feedbackMessage, setFeedbackMessage] = useState("");
   // Safety check for empty questions or loading
   const currentQuestion = questions?.[currentIndex];
 
@@ -91,9 +107,27 @@ export function JourneyGameView({
 
     if (correct) {
       setCorrectCount((prev) => prev + 1);
-      setComboCount((prev) => prev + 1);
+      setComboCount((prev) => {
+        const newCombo = prev + 1;
+        // Se tiver combo (2+), mostra frase de sucesso
+        if (newCombo >= 2) {
+           const msg = SUCCESS_MESSAGES[Math.floor(Math.random() * SUCCESS_MESSAGES.length)];
+           setFeedbackMessage(msg);
+        } else {
+           setFeedbackMessage("Correto!");
+        }
+        return newCombo;
+      });
       play("correct");
     } else {
+      // Mostra frase de incentivo apenas se perdeu um combo
+      if (comboCount >= 2) {
+         const msg = ENCOURAGEMENT_MESSAGES[Math.floor(Math.random() * ENCOURAGEMENT_MESSAGES.length)];
+         setFeedbackMessage(msg);
+      } else {
+         setFeedbackMessage("Incorreto...");
+      }
+
       setComboCount(0);
       play("wrong");
     }
@@ -323,8 +357,10 @@ export function JourneyGameView({
                   <X className="w-6 h-6 sm:w-8 sm:h-8 stroke-[4]" />
                 )}
               </div>
+             
 
               <div className="flex-1">
+                 
                 <h3
                   className={cn(
                     "font-extrabold text-xl sm:text-2xl",
@@ -335,6 +371,7 @@ export function JourneyGameView({
                 >
                   {isCorrect ? "Correto!" : "Incorreto..."}
                 </h3>
+                <p>{feedbackMessage}</p>
                 {!isCorrect && (
                   <p className="text-red-600/80 dark:text-red-300 font-medium text-sm sm:text-base leading-tight mt-1">
                     Resposta:{" "}

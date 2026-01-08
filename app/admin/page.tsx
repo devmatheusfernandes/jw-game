@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { Deck, deleteDeck, getGlobalDecks } from "@/lib/decks";
-import { Plus, Edit, Trash2, Globe, Loader2, ShieldAlert, ArrowLeft, Lock } from "lucide-react";
+import { Plus, Edit, Trash2, Globe, Loader2, ShieldAlert, ArrowLeft, Lock, Map } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -103,6 +103,29 @@ export default function AdminDashboard() {
                     <Lock className="w-3 h-3 text-red-700 dark:text-red-400" />
                     <span className="text-[10px] font-bold uppercase tracking-wider text-red-700 dark:text-red-400">Admin Mode</span>
                 </div>
+            </div>
+
+            {/* Admin Modules Navigation */}
+            <div className="grid gap-4 md:grid-cols-2 mb-2">
+                <Link href="/admin/journey">
+                     <motion.div 
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="bg-white dark:bg-zinc-900/80 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition-all flex items-center gap-4 group cursor-pointer"
+                    >
+                        <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/40 transition-colors">
+                            <Map className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-zinc-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                Modo Jornada
+                            </h3>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                Gerenciar etapas e níveis
+                            </p>
+                        </div>
+                    </motion.div>
+                </Link>
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">

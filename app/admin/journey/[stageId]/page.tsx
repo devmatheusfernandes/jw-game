@@ -169,15 +169,34 @@ export default function StageEditorPage({ params }: PageProps) {
                 </div>
             </div>
             <div className="space-y-2">
-                <label className="text-sm font-medium">Cor (Tailwind Class)</label>
-                <div className="flex gap-2 items-center">
-                    <div className={`w-8 h-8 rounded-full ${stage.color || "bg-gray-500"}`} />
-                    <input 
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        value={stage.color || ""}
-                        onChange={e => setStage({...stage, color: e.target.value})}
-                        placeholder="Ex: bg-blue-500"
-                    />
+                <label className="text-sm font-medium">Cor do Tema</label>
+                <div className="flex flex-wrap gap-3 p-3 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-100 dark:border-zinc-800">
+                    {[
+                        "bg-red-500", "bg-orange-500", "bg-amber-500", 
+                        "bg-yellow-500", "bg-lime-500", "bg-green-500", 
+                        "bg-emerald-500", "bg-teal-500", "bg-cyan-500", 
+                        "bg-sky-500", "bg-blue-500", "bg-indigo-500", 
+                        "bg-violet-500", "bg-purple-500", "bg-fuchsia-500", 
+                        "bg-pink-500", "bg-rose-500", "bg-zinc-500"
+                    ].map((color) => (
+                        <button
+                            key={color}
+                            type="button"
+                            onClick={() => setStage({ ...stage, color })}
+                            className={`w-8 h-8 rounded-full ${color} transition-all hover:scale-110 ${
+                                stage.color === color 
+                                    ? "ring-2 ring-offset-2 ring-zinc-900 dark:ring-white scale-110 shadow-lg" 
+                                    : "hover:ring-2 hover:ring-offset-1 hover:ring-zinc-300 dark:hover:ring-zinc-700 opacity-80 hover:opacity-100"
+                            }`}
+                            title={color}
+                        />
+                    ))}
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                    <span className="text-xs text-zinc-500">Cor selecionada:</span>
+                    <code className="text-xs bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded text-zinc-600 dark:text-zinc-400 font-mono">
+                        {stage.color || "Nenhuma"}
+                    </code>
                 </div>
             </div>
             <div className="col-span-1 md:col-span-2 space-y-2">

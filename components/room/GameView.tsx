@@ -6,6 +6,7 @@ import { Room, Player } from "@/types";
 import { cn } from "@/lib/utils";
 import { useSound } from "@/hooks/useSound";
 import { useEffect } from "react";
+import { useHaptic } from "@/hooks/useHaptic";
 
 interface GameViewProps {
   room: Room;
@@ -25,6 +26,7 @@ export function GameView({
   onNextQuestion 
 }: GameViewProps) {
   const { play } = useSound();
+  const { triggerSuccess, triggerError } = useHaptic();
   const allAnswered = room.players.every(p => p.currentAnswer !== undefined && p.currentAnswer !== null);
   const isTimeUp = (room.settings.mode === 'time' || room.settings.mode === 'all_answered') && timeLeft === 0;
   const isLastQuestion = room.currentQuestionIndex === room.questions.length - 1;
@@ -35,11 +37,13 @@ export function GameView({
         const isCorrect = currentPlayer.currentAnswer === room.questions[room.currentQuestionIndex].correctAnswer;
         if (isCorrect) {
             play('correct');
+            triggerSuccess();
         } else {
             play('wrong');
+            triggerError();
         }
     }
-  }, [room.isShowingResults, currentPlayer?.currentAnswer, room.questions, room.currentQuestionIndex, play]);
+  }, [room.isShowingResults, currentPlayer?.currentAnswer, room.questions, room.currentQuestionIndex, play, triggerSuccess, triggerError]);
 
   // Tocar som de contagem regressiva nos últimos 3 segundos (apenas modo tempo)
   useEffect(() => {

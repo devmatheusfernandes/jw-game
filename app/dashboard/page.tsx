@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { Deck, deleteDeck, getUserDecks } from "@/lib/decks";
-import { Plus, Edit, Trash2, BookOpen, Loader2, ArrowLeft, LayoutGrid, Map, Trophy, ArrowRight } from "lucide-react";
+import { Plus, Edit, Trash2, BookOpen, Loader2, ArrowLeft, LayoutGrid, Map, Trophy, ArrowRight, Settings2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -111,6 +111,13 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard/settings"
+              className="p-3 text-zinc-500 hover:text-indigo-600 hover:bg-white dark:hover:bg-zinc-800 rounded-xl transition-all"
+              title="Configurações"
+            >
+              <Settings2 className="w-5 h-5" />
+            </Link>
             <ThemeToggle />
             <Link
               href="/dashboard/deck/new"

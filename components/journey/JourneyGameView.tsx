@@ -6,6 +6,8 @@ import { Check, X, Flag } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useJourney } from "@/hooks/useJourney";
 import { useSound } from "@/hooks/useSound";
+import { useHaptic } from "@/hooks/useHaptic";
+import { triggerConfetti, triggerBadgeConfetti } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -165,9 +167,11 @@ export function JourneyGameView({
   const handleFinish = async () => {
     setCompleted(true);
     play("victory");
+    triggerConfetti();
     const result = await finishDeck(deckId);
     if (result?.newBadges) {
       setEarnedBadges(result.newBadges);
+      triggerBadgeConfetti();
     }
   };
 

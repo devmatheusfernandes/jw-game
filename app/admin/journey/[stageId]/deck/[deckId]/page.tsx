@@ -7,7 +7,7 @@ import { Question, QuestionType } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash, Save, Loader2, Upload } from "lucide-react";
 
 interface PageProps {
   params: Promise<{
@@ -94,6 +94,43 @@ export default function DeckEditorPage({ params }: PageProps) {
       setDeck({ ...deck, questions: newQuestions });
   };
 
+  const handleImportJson = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!deck) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        if (!Array.isArray(json)) {
+            throw new Error("O arquivo deve conter um array de perguntas");
+        }
+
+        const newQuestions: Question[] = json.map((item: any, idx: number) => ({
+            id: `q-${Date.now()}-${idx}`,
+            text: item.text || "Pergunta importada",
+            type: item.type || "multiple_choice",
+            options: item.options || [],
+            correctAnswer: item.correctAnswer,
+            timeLimit: item.timeLimit || 30
+        }));
+
+        setDeck({
+            ...deck,
+            questions: [...(deck.questions || []), ...newQuestions]
+        });
+        toast.success(`${newQuestions.length} perguntas importadas!`);
+      } catch (err) {
+        console.error(err);
+        toast.error("Erro ao ler arquivo JSON");
+      }
+    };
+    reader.readAsText(file);
+    // Reset input
+    e.target.value = "";
+  };
+
   if (loading) return (
     <div className="min-h-[100dvh] flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
         <div className="flex flex-col items-center gap-3">
@@ -154,9 +191,15 @@ export default function DeckEditorPage({ params }: PageProps) {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-xl font-bold">Questões ({deck.questions?.length || 0})</h2>
-                <Button variant="outline" onClick={addQuestion}>
-                    <Plus className="w-4 h-4 mr-2" /> Adicionar Questão
-                </Button>
+                <div className="flex gap-2">
+                    <label className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">
+                        <Upload className="w-4 h-4 mr-2" /> Importar JSON
+                        <input type="file" className="hidden" accept=".json" onChange={handleImportJson} />
+                    </label>
+                    <Button variant="outline" onClick={addQuestion}>
+                        <Plus className="w-4 h-4 mr-2" /> Adicionar Questão
+                    </Button>
+                </div>
             </div>
 
             <div className="space-y-4">

@@ -63,7 +63,9 @@ export function JourneyGameView({
   const [earnedBadges, setEarnedBadges] = useState<Badge[]>([]);
   const [correctCount, setCorrectCount] = useState(0);
   const [comboCount, setComboCount] = useState(0);
+  const [sessionScore, setSessionScore] = useState(0);
   const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [finalIsReplay, setFinalIsReplay] = useState(false);
   // Safety check for empty questions or loading
   const currentQuestion = questions?.[currentIndex];
 
@@ -109,18 +111,36 @@ export function JourneyGameView({
 
     if (correct) {
       setCorrectCount((prev) => prev + 1);
-      setComboCount((prev) => {
-        const newCombo = prev + 1;
-        // Se tiver combo (2+), mostra frase de sucesso
-        if (newCombo >= 2) {
-           const msg = SUCCESS_MESSAGES[Math.floor(Math.random() * SUCCESS_MESSAGES.length)];
-           setFeedbackMessage(msg);
-        } else {
-           setFeedbackMessage("Correto!");
-        }
-        return newCombo;
-      });
+      
+      const newCombo = comboCount + 1;
+      const bonus = Math.min((newCombo - 1) * 2, 20); // Bônus começa a partir do 2º acerto
+      const points = 10 + Math.max(0, bonus);
+
+      setSessionScore((prev) => prev + points);
+      setComboCount(newCombo);
+
+      // Se tiver combo (2+), mostra frase de sucesso
+      if (newCombo >= 2) {
+         const msg = SUCCESS_MESSAGES[Math.floor(Math.random() * SUCCESS_MESSAGES.length)];
+         setFeedbackMessage(`${msg} (+${points} XP)`);
+      } else {
+         setFeedbackMessage(`Correto! (+${points} XP)`);
+      }
       play("correct");
+
+      if (submitUserAnswer) {
+        submitUserAnswer(deckId, correct, Math.max(0, bonus)).then((result) => {
+          if (result?.newBadges && result.newBadges.length > 0) {
+            setEarnedBadges((prev) => {
+              const existingIds = new Set(prev.map((b) => b.id));
+              const uniqueNew = result.newBadges.filter(
+                (b) => !existingIds.has(b.id)
+              );
+              return [...prev, ...uniqueNew];
+            });
+          }
+        });
+      }
     } else {
       // Mostra frase de incentivo apenas se perdeu um combo
       if (comboCount >= 2) {
@@ -132,20 +152,10 @@ export function JourneyGameView({
 
       setComboCount(0);
       play("wrong");
-    }
 
-    if (submitUserAnswer) {
-      submitUserAnswer(deckId, correct).then((result) => {
-        if (result?.newBadges && result.newBadges.length > 0) {
-          setEarnedBadges((prev) => {
-            const existingIds = new Set(prev.map((b) => b.id));
-            const uniqueNew = result.newBadges.filter(
-              (b) => !existingIds.has(b.id)
-            );
-            return [...prev, ...uniqueNew];
-          });
-        }
-      });
+      if (submitUserAnswer) {
+          submitUserAnswer(deckId, correct, 0);
+      }
     }
   };
 
@@ -165,6 +175,8 @@ export function JourneyGameView({
   };
 
   const handleFinish = async () => {
+    // Snapshot: Salva se era replay ANTES de marcar como completo no banco
+    setFinalIsReplay(isReplay);
     setCompleted(true);
     play("victory");
     triggerConfetti();
@@ -193,7 +205,8 @@ export function JourneyGameView({
         onBack={() => router.push("/journey")}
         correctCount={correctCount}
         totalQuestions={totalQuestions}
-        isReplay={isReplay}
+        isReplay={finalIsReplay}
+        sessionScore={sessionScore}
       />
     );
   }
@@ -435,6 +448,7 @@ interface CompletionViewProps {
   correctCount: number;
   totalQuestions: number;
   isReplay: boolean;
+  sessionScore: number;
 }
 
 function CompletionView({
@@ -444,8 +458,9 @@ function CompletionView({
   correctCount,
   totalQuestions,
   isReplay,
+  sessionScore,
 }: CompletionViewProps) {
-  const xpGained = isReplay ? 0 : correctCount * 10 + 50; // 10 per correct + 50 bonus
+  const xpGained = isReplay ? 0 : sessionScore + 50; // Pontuação acumulada + 50 bônus de conclusão
   const accuracy = Math.round((correctCount / totalQuestions) * 100);
 
   return (

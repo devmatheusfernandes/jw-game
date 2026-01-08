@@ -61,10 +61,10 @@ export function useJourney() {
     }
   }, [user]);
 
-  const submitUserAnswer = useCallback(async (deckId: string, isCorrect: boolean) => {
+  const submitUserAnswer = useCallback(async (deckId: string, isCorrect: boolean, bonusPoints: number = 0) => {
     if (!user) return;
     try {
-        const { newBadges } = await submitAnswer(user.uid, deckId, isCorrect);
+        const { newBadges } = await submitAnswer(user.uid, deckId, isCorrect, bonusPoints);
         
         if (newBadges.length > 0) {
             newBadges.forEach(badge => {

@@ -146,7 +146,7 @@ export async function saveDeckProgress(uid: string, deckId: string, questionInde
 }
 
 // Function to handle answer submission, update score, streak, and badges
-export async function submitAnswer(uid: string, deckId: string, isCorrect: boolean): Promise<{ newBadges: Badge[] }> {
+export async function submitAnswer(uid: string, deckId: string, isCorrect: boolean, bonusPoints: number = 0): Promise<{ newBadges: Badge[] }> {
     if (!uid) return { newBadges: [] };
     const docRef = doc(db, COLLECTION_NAME, uid);
     const userProgress = await getUserJourneyProgress(uid);
@@ -162,11 +162,12 @@ export async function submitAnswer(uid: string, deckId: string, isCorrect: boole
     // Only award points if deck is NOT completed
     if (!isDeckCompleted) {
         if (isCorrect) {
-            updates.totalScore = increment(10); // 10 points per correct answer
+            const points = 10 + bonusPoints;
+            updates.totalScore = increment(points); // 10 base + bonus
             updates.consecutiveCorrectAnswers = increment(1);
             
             const currentCombo = (userProgress.consecutiveCorrectAnswers || 0) + 1;
-            const currentScore = (userProgress.totalScore || 0) + 10;
+            const currentScore = (userProgress.totalScore || 0) + points;
 
             // Check Combo Badges
             if (currentCombo === 5) checkBadge("combo-5", earnedBadgeIds, newBadges, updates);

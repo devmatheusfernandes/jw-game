@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { useSound } from "@/hooks/useSound";
 import { useEffect } from "react";
+import { useHaptic } from "@/hooks/useHaptic";
 
 interface ResultsViewProps {
   room: Room;
@@ -14,11 +15,13 @@ interface ResultsViewProps {
 export function ResultsView({ room, currentPlayer }: ResultsViewProps) {
   const router = useRouter();
   const { play } = useSound();
+  const { triggerVictory } = useHaptic();
   const sortedPlayers = [...room.players].sort((a, b) => b.score - a.score);
   
   useEffect(() => {
     play('victory');
-  }, [play]);
+    triggerVictory();
+  }, [play, triggerVictory]);
 
   const winner = sortedPlayers[0];
   const isWinner = currentPlayer?.id === winner?.id;

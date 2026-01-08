@@ -11,12 +11,19 @@ export const useHaptic = () => {
   }, [isEnabled]);
 
   const triggerSuccess = useCallback(() => {
-    vibrate([50, 30, 50]);
+    // Quick double tap for success
+    vibrate([20, 50, 20]);
   }, [vibrate]);
 
   const triggerError = useCallback(() => {
-    vibrate([100, 50, 100]);
+    // Heavy double vibration for error
+    vibrate([200, 100, 200]);
   }, [vibrate]);
 
-  return { vibrate, triggerSuccess, triggerError };
+  const triggerVictory = useCallback(() => {
+    // Celebration pattern
+    vibrate([100, 50, 100, 50, 100, 50, 200]);
+  }, [vibrate]);
+
+  return { vibrate, triggerSuccess, triggerError, triggerVictory };
 };

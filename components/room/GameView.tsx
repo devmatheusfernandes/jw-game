@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Play, Check } from "lucide-react";
+import { Play, Check, X, XIcon } from "lucide-react";
 import { Room, Player } from "@/types";
 import { cn } from "@/lib/utils";
 import { useSound } from "@/hooks/useSound";
@@ -135,11 +135,28 @@ export function GameView({
                     stateStyle = "bg-zinc-100 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 opacity-50 cursor-not-allowed";
                 }
 
+                // Animation variants based on state
+                let animateProps = {};
+                if (room.isShowingResults) {
+                    if (isCorrect) {
+                        animateProps = { 
+                            scale: [1, 1.02, 1],
+                            transition: { repeat: Infinity, duration: 2, ease: "easeInOut" }
+                        };
+                    } else if (isSelected) {
+                        animateProps = { 
+                            x: [0, -4, 4, -4, 4, 0],
+                            transition: { duration: 0.4 }
+                        };
+                    }
+                }
+
                 return (
                     <motion.button
                         key={idx}
                         onClick={() => handleAnswer(val)}
                         disabled={areOptionsDisabled}
+                        animate={animateProps}
                         whileTap={!areOptionsDisabled ? { scale: 0.98 } : {}}
                         className={cn(
                             "relative p-4 rounded-2xl border-2 text-left transition-all duration-200 flex items-center justify-between group h-20 sm:h-24",
@@ -152,9 +169,13 @@ export function GameView({
                         )}>
                             {String(val) === "true" ? "Verdadeiro" : String(val) === "false" ? "Falso" : val}
                         </span>
-                        {isSelected && !room.isShowingResults && (
+                        {(isSelected || (room.isShowingResults && isCorrect)) && (
                             <div className="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center">
-                                <Check className="w-4 h-4 text-white" />
+                                {room.isShowingResults && isSelected && !isCorrect ? (
+                                    <XIcon className="w-4 h-4 text-white" />
+                                ) : (
+                                    <Check className="w-4 h-4 text-white" />
+                                )}
                             </div>
                         )}
                     </motion.button>

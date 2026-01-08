@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { PlayersStatusBar } from "@/components/room/PlayersStatusBar";
-import { SoundToggle } from "@/components/ui/SoundToggle";
+import { SettingsDropdown } from "@/components/ui/SettingsDropdown";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useSound } from "@/hooks/useSound";
 
@@ -153,7 +153,6 @@ export default function RoomPage() {
       <div className="flex min-h-[100dvh] items-center justify-center bg-zinc-50 dark:bg-zinc-950">
         <div className="flex flex-col items-center gap-4">
             <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
-            <p className="text-zinc-500 text-sm animate-pulse">Sincronizando...</p>
         </div>
       </div>
     );
@@ -196,7 +195,7 @@ export default function RoomPage() {
             </div>
         </div>
         <div className="flex items-center gap-3">
-            <SoundToggle />
+            <SettingsDropdown />
             <ThemeToggle />
             {isHost && (room.status === 'playing' || room.status === 'waiting') && (
                 <AlertDialog>

@@ -27,6 +27,7 @@ export function GameView({
   const { play } = useSound();
   const allAnswered = room.players.every(p => p.currentAnswer !== undefined && p.currentAnswer !== null);
   const isTimeUp = (room.settings.mode === 'time' || room.settings.mode === 'all_answered') && timeLeft === 0;
+  const isLastQuestion = room.currentQuestionIndex === room.questions.length - 1;
 
   // Tocar som de resultado quando revelado
   useEffect(() => {
@@ -177,7 +178,9 @@ export function GameView({
                         room.isShowingResults ? "bg-green-600 hover:bg-green-700 shadow-green-600/30" : "bg-zinc-800 hover:bg-zinc-900 shadow-zinc-900/30"
                     )}
                 >
-                    {room.isShowingResults ? "Próxima Pergunta" : "Ver Resultados"} <Play className="w-4 h-4 fill-current" />
+                    {room.isShowingResults 
+                        ? (isLastQuestion ? "Ver Ranking Final" : "Próxima Pergunta") 
+                        : "Ver Resultados"} <Play className="w-4 h-4 fill-current" />
                 </motion.button>
             )}
             {!isHost && !room.isShowingResults && currentPlayer?.currentAnswer && (

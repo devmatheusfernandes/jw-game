@@ -283,7 +283,7 @@ export function CreateGameForm({ userId }: CreateGameFormProps) {
                </div>
 
                 {/* Lista com Scroll Dedicado */}
-                <div className="flex-1 overflow-y-auto pr-1 space-y-2 mt-2 max-h-[300px] sm:max-h-[400px]">
+                <div className="flex-1 overflow-y-auto pr-1 space-y-2 mt-2 max-h-[300px] sm:max-h-[400px] no-scrollbar">
                   {(selectedCategory ? categoryFilteredDecks : filteredDecks).map((deck) => (
                     <div
                       key={deck.id}

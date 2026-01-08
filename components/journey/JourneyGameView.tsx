@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Question } from "@/types";
 import { Badge } from "@/types/journey";
+import { ComboIndicator } from "./ComboIndicator";
 
 interface JourneyGameViewProps {
   deckId: string;
@@ -43,6 +44,7 @@ export function JourneyGameView({
   const [completed, setCompleted] = useState(false);
   const [earnedBadges, setEarnedBadges] = useState<Badge[]>([]);
   const [correctCount, setCorrectCount] = useState(0);
+  const [comboCount, setComboCount] = useState(0);
 
   // Safety check for empty questions or loading
   const currentQuestion = questions?.[currentIndex];
@@ -73,13 +75,26 @@ export function JourneyGameView({
     setSelectedAnswer(answer);
     setIsAnswered(true);
 
-    const correct = answer === currentQuestion.correctAnswer;
+    // Normalização para comparação robusta
+    const valA = String(answer).toLowerCase().trim();
+    const valB = String(currentQuestion.correctAnswer).toLowerCase().trim();
+    
+    // Mapeamento de pt-BR para en-US se necessário
+    const mapToBool = (val: string) => {
+      if (val === "verdadeiro" || val === "true") return "true";
+      if (val === "falso" || val === "false") return "false";
+      return val;
+    };
+
+    const correct = mapToBool(valA) === mapToBool(valB);
     setIsCorrect(correct);
 
     if (correct) {
       setCorrectCount((prev) => prev + 1);
+      setComboCount((prev) => prev + 1);
       play("correct");
     } else {
+      setComboCount(0);
       play("wrong");
     }
 
@@ -149,7 +164,7 @@ export function JourneyGameView({
   // MAIN GAME VIEW
   // ------------------------------------------------------------------
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-white dark:bg-zinc-950 max-w-2xl mx-auto shadow-2xl overflow-hidden">
+    <div className="flex flex-col min-h-[100dvh] bg-white dark:bg-zinc-950 max-w-2xl mx-auto shadow-2xl overflow-hidden relative">
       {/* HEADER: Close & Progress */}
       <header className="flex items-center gap-4 p-4 pt-6">
         <button
@@ -159,17 +174,21 @@ export function JourneyGameView({
           <X className="w-6 h-6" />
         </button>
 
-        <div className="flex-1 h-4 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden relative">
-          <motion.div
-            className="h-full bg-green-500 rounded-full absolute top-0 left-0"
-            initial={{
-              width: `${((currentIndex - 1) / totalQuestions) * 100}%`,
-            }}
-            animate={{ width: `${progressPercent}%` }}
-            transition={{ type: "spring", stiffness: 50, damping: 20 }}
-          />
-          {/* Highlight/Glow bar */}
-          <div className="h-1 bg-white/20 absolute top-1 left-2 right-2 rounded-full" />
+        <div className="flex-1 flex items-center gap-3">
+          <div className="flex-1 h-4 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden relative">
+            <motion.div
+              className="h-full bg-green-500 rounded-full absolute top-0 left-0"
+              initial={{
+                width: `${((currentIndex - 1) / totalQuestions) * 100}%`,
+              }}
+              animate={{ width: `${progressPercent}%` }}
+              transition={{ type: "spring", stiffness: 50, damping: 20 }}
+            />
+            {/* Highlight/Glow bar */}
+            <div className="h-1 bg-white/20 absolute top-1 left-2 right-2 rounded-full" />
+          </div>
+          
+          <ComboIndicator count={comboCount} mode="inline" />
         </div>
       </header>
 

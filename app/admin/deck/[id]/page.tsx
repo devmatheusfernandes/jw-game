@@ -5,7 +5,7 @@ import { getDeckById, saveDeck } from "@/lib/decks";
 import { getCategories, ensureCategories, Category } from "@/lib/categories";
 import { Question } from "@/types";
 import { generateUUID } from "@/lib/utils";
-import { ArrowLeft, Plus, Save, Trash2, Clock, CheckCircle, X, ShieldAlert, Edit, Type, Check, Loader2, AlertTriangle, Layers, Upload } from "lucide-react";
+import { ArrowLeft, Plus, Save, Trash2, Clock, CheckCircle, X, ShieldAlert, Edit, Type, Check, Loader2, AlertTriangle, Layers, Upload, FileJson, Clipboard } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -41,6 +41,10 @@ export default function AdminDeckEditor() {
   const [qOptions, setQOptions] = useState(["", "", "", ""]);
   const [qCorrect, setQCorrect] = useState(""); 
   const [qTime, setQTime] = useState(30);
+
+  // JSON Import Modal State
+  const [isJsonModalOpen, setIsJsonModalOpen] = useState(false);
+  const [jsonPasteContent, setJsonPasteContent] = useState("");
 
   useEffect(() => {
     if (!isNew && user) {
@@ -140,6 +144,49 @@ export default function AdminDeckEditor() {
     setQTime(30);
   }
 
+  function importQuestionsFromData(json: any) {
+    if (!Array.isArray(json)) {
+      toast.error("O conteúdo deve ser uma lista de perguntas");
+      return false;
+    }
+
+    const newQuestions: Question[] = [];
+    let errorCount = 0;
+
+    json.forEach((item: any) => {
+       // Validação básica
+       if (!item.text || !item.type || item.correctAnswer === undefined) {
+         errorCount++;
+         return;
+       }
+       
+       if (item.type === 'multiple_choice' && (!item.options || !Array.isArray(item.options))) {
+         errorCount++;
+         return;
+       }
+
+       newQuestions.push({
+         id: generateUUID(),
+         text: item.text,
+         type: item.type,
+         options: item.options || [],
+         correctAnswer: item.correctAnswer,
+         timeLimit: item.timeLimit || 30
+       });
+    });
+
+    if (newQuestions.length > 0) {
+        setQuestions(prev => [...prev, ...newQuestions]);
+        toast.success(`${newQuestions.length} perguntas importadas!`);
+        return true;
+    }
+    
+    if (errorCount > 0) {
+        toast.warning(`${errorCount} perguntas ignoradas por formato inválido.`);
+    }
+    return false;
+  }
+
   function handleImportJson(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -148,45 +195,7 @@ export default function AdminDeckEditor() {
     reader.onload = (event) => {
       try {
         const json = JSON.parse(event.target?.result as string);
-        if (!Array.isArray(json)) {
-          toast.error("O arquivo deve conter uma lista de perguntas");
-          return;
-        }
-
-        const newQuestions: Question[] = [];
-        let errorCount = 0;
-
-        json.forEach((item: any) => {
-           // Validação básica
-           if (!item.text || !item.type || item.correctAnswer === undefined) {
-             errorCount++;
-             return;
-           }
-           
-           if (item.type === 'multiple_choice' && (!item.options || !Array.isArray(item.options))) {
-             errorCount++;
-             return;
-           }
-
-           newQuestions.push({
-             id: generateUUID(),
-             text: item.text,
-             type: item.type,
-             options: item.options || [],
-             correctAnswer: item.correctAnswer,
-             timeLimit: item.timeLimit || 30
-           });
-        });
-
-        if (newQuestions.length > 0) {
-            setQuestions([...questions, ...newQuestions]);
-            toast.success(`${newQuestions.length} perguntas importadas!`);
-        }
-        
-        if (errorCount > 0) {
-            toast.warning(`${errorCount} perguntas ignoradas por formato inválido.`);
-        }
-        
+        importQuestionsFromData(json);
       } catch (err) {
         console.error(err);
         toast.error("Erro ao ler arquivo JSON");
@@ -195,6 +204,18 @@ export default function AdminDeckEditor() {
     reader.readAsText(file);
     // Reset input
     e.target.value = '';
+  }
+
+  function handlePasteJson() {
+    try {
+        const json = JSON.parse(jsonPasteContent);
+        if (importQuestionsFromData(json)) {
+            setIsJsonModalOpen(false);
+            setJsonPasteContent("");
+        }
+    } catch (err) {
+        toast.error("JSON inválido. Verifique a formatação.");
+    }
   }
 
   async function handleSaveDeck() {
@@ -558,7 +579,7 @@ export default function AdminDeckEditor() {
             </h2>
             <label className="flex items-center gap-2 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg cursor-pointer transition-colors text-xs font-bold text-zinc-600 dark:text-zinc-300">
                 <Upload className="w-4 h-4" />
-                Importar JSON
+                Importar Arquivo
                 <input 
                     type="file" 
                     accept=".json" 
@@ -566,6 +587,13 @@ export default function AdminDeckEditor() {
                     onChange={handleImportJson} 
                 />
             </label>
+            <button
+                onClick={() => setIsJsonModalOpen(true)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg cursor-pointer transition-colors text-xs font-bold text-zinc-600 dark:text-zinc-300"
+            >
+                <Clipboard className="w-4 h-4" />
+                Colar JSON
+            </button>
           </div>
           
           <div className="space-y-3 min-h-[100px]">
@@ -648,6 +676,78 @@ export default function AdminDeckEditor() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* JSON Paste Modal */}
+      <AnimatePresence>
+        {isJsonModalOpen && (
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+                onClick={(e) => {
+                    if (e.target === e.currentTarget) setIsJsonModalOpen(false);
+                }}
+            >
+                <motion.div
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.95, opacity: 0 }}
+                    className="bg-white dark:bg-zinc-900 w-full max-w-2xl rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+                >
+                    <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-900/50">
+                        <h3 className="font-bold text-lg text-zinc-900 dark:text-white flex items-center gap-2">
+                            <FileJson className="w-5 h-5 text-red-600" />
+                            Colar JSON
+                        </h3>
+                        <button 
+                            onClick={() => setIsJsonModalOpen(false)}
+                            className="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                        >
+                            <X className="w-4 h-4 text-zinc-500" />
+                        </button>
+                    </div>
+                    
+                    <div className="p-4 space-y-4">
+                        <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 p-3 rounded-lg text-sm border border-blue-100 dark:border-blue-900/30">
+                            Cole o array de objetos JSON contendo as perguntas abaixo.
+                        </div>
+                        
+                        <textarea
+                            value={jsonPasteContent}
+                            onChange={e => setJsonPasteContent(e.target.value)}
+                            className="w-full h-64 p-4 font-mono text-xs bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none resize-none"
+                            placeholder='[
+  {
+    "text": "Pergunta exemplo?",
+    "type": "multiple_choice",
+    "options": ["A", "B", "C", "D"],
+    "correctAnswer": "A",
+    "timeLimit": 30
+  }
+]'
+                        />
+                        
+                        <div className="flex justify-end gap-3 pt-2">
+                            <button
+                                onClick={() => setIsJsonModalOpen(false)}
+                                className="px-4 py-2 text-zinc-600 dark:text-zinc-300 font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handlePasteJson}
+                                disabled={!jsonPasteContent.trim()}
+                                className="px-4 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-600/20"
+                            >
+                                Importar Perguntas
+                            </button>
+                        </div>
+                    </div>
+                </motion.div>
+            </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

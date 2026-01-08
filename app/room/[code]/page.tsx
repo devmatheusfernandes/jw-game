@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { PlayersStatusBar } from "@/components/room/PlayersStatusBar";
 import { SoundToggle } from "@/components/ui/SoundToggle";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useSound } from "@/hooks/useSound";
@@ -242,6 +243,11 @@ export default function RoomPage() {
       </header>
 
       <main className="flex-1 w-full max-w-3xl mx-auto p-4 flex flex-col justify-center z-10">
+        
+        {room.status === 'playing' && (
+           <PlayersStatusBar players={room.players} />
+        )}
+
         <AnimatePresence mode="wait">
             
             {/* LOBBY VIEW */}

@@ -73,31 +73,7 @@ export function GameView({
         exit={{ opacity: 0, scale: 0.95 }}
         className="flex flex-col h-full gap-4"
     >
-         {/* Progress & Timer */}
-        <div className="bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-            <div className={cn(
-                "flex justify-between items-center text-xs font-bold text-zinc-400 uppercase tracking-wider",
-                room.settings.mode === 'time' && "mb-2"
-            )}>
-                 <span>Questão {room.currentQuestionIndex + 1}/{room.questions.length}</span>
-                 {timeLeft !== null && room.settings.mode === 'time' && <span className={cn(timeLeft < 10 ? "text-red-500" : "text-zinc-500")}>{timeLeft}s</span>}
-            </div>
-            {/* Timer Bar */}
-            {room.settings.mode === 'time' && (
-                <div className="h-2 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-                    <motion.div 
-                        className={cn(
-                            "h-full rounded-full transition-colors",
-                            timeLeft !== null && timeLeft < 10 ? "bg-red-500" : "bg-blue-500"
-                        )}
-                        animate={{ width: `${timePercentage}%` }}
-                        transition={{ ease: "linear", duration: 1 }}
-                    />
-                </div>
-            )}
-        </div>
-
-        {/* Question Card */}
+         {/* Question Card */}
         <div className="flex-1 flex flex-col justify-center">
              <motion.div 
                  key={room.currentQuestionIndex}
@@ -105,7 +81,23 @@ export function GameView({
                  animate={{ opacity: 1, x: 0 }}
                  className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-xl border border-zinc-100 dark:border-zinc-800 min-h-[180px] flex flex-col items-center justify-center text-center gap-4 relative overflow-hidden"
              >
-                <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500" />
+                {/* Timer Bar */}
+                {room.settings.mode === 'time' && (
+                    <div className="absolute top-0 left-0 w-full h-1 bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+                        <motion.div 
+                            className={cn(
+                                "h-full transition-colors",
+                                timeLeft !== null && timeLeft < 10 ? "bg-red-500" : "bg-blue-500"
+                            )}
+                            animate={{ width: `${timePercentage}%` }}
+                            transition={{ ease: "linear", duration: 1 }}
+                        />
+                    </div>
+                )}
+                {room.settings.mode !== 'time' && (
+                     <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500" />
+                )}
+
                 <h2 className="text-xl sm:text-2xl font-bold text-zinc-800 dark:text-zinc-100 leading-snug">
                     {room.questions[room.currentQuestionIndex].text}
                 </h2>
@@ -171,14 +163,14 @@ export function GameView({
         </div>
 
         {/* Footer Actions */}
-        <div className="min-h-[60px] flex items-center justify-center">
+        <div className="min-h-[60px] flex items-center justify-center pb-8 flex-col gap-4">
             {showNextButton && (
                 <motion.button
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
+                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
                     onClick={onNextQuestion}
                     className={cn(
-                        "px-8 py-3 rounded-xl font-bold text-white shadow-lg flex items-center gap-2 transition-all hover:scale-105 active:scale-95",
+                        "fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-8 py-3 rounded-full font-bold text-white shadow-xl flex items-center gap-2 transition-all hover:scale-105 active:scale-95",
                         room.isShowingResults ? "bg-green-600 hover:bg-green-700 shadow-green-600/30" : "bg-zinc-800 hover:bg-zinc-900 shadow-zinc-900/30"
                     )}
                 >
@@ -188,8 +180,15 @@ export function GameView({
                 </motion.button>
             )}
             {!isHost && !room.isShowingResults && currentPlayer?.currentAnswer && (
-                 <span className="text-sm font-medium text-zinc-500 animate-pulse">Aguardando outros jogadores...</span>
+                 <span className="text-sm font-medium text-zinc-500 animate-pulse">
+                    {allAnswered ? 'Esperando host mostrar resultados' : 'Aguardando outros jogadores...'}
+                 </span>
             )}
+
+            {/* Question Counter Footer */}
+            <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider text-center">
+                 <span>Questão {room.currentQuestionIndex + 1}/{room.questions.length}</span>
+            </div>
         </div>
     </motion.div>
   );

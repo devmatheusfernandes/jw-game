@@ -9,6 +9,7 @@ import { UserProgress } from "@/types/journey";
 import { ArrowLeft, Loader2, Star, Trophy } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { SettingsDropdown } from "@/components/ui/SettingsDropdown";
 
 export default function JourneyPage() {
   const { user, loading } = useAuth();
@@ -73,6 +74,7 @@ export default function JourneyPage() {
                 )}
             </Link>
             <ThemeToggle />
+            <SettingsDropdown showSeeAll={true} />
             <h1 className="hidden text-lg font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
               Minha Jornada
             </h1>

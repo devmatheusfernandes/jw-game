@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Deck, getDeckById, saveDeck } from "@/lib/decks";
 import { getCategories, ensureCategories, Category } from "@/lib/categories";
 import { Question } from "@/types";
-import { generateUUID } from "@/lib/utils";
+import { generateUUID, removeUndefined } from "@/lib/utils";
 import { ArrowLeft, Plus, Save, Trash2, Clock, CheckCircle, X, Edit, Layers, Type, Check, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
@@ -177,14 +177,14 @@ export default function DeckEditor() {
     setSaving(true);
     try {
       await ensureCategories(selectedCategories, user.uid);
-      await saveDeck({
+      await saveDeck(removeUndefined({
         title,
         description,
         questions,
         ownerId: user.uid,
         isGlobal: false,
         categories: selectedCategories
-      }, isNew ? undefined : deckId);
+      }), isNew ? undefined : deckId);
       toast.success("Deck salvo com sucesso!");
       router.push("/dashboard");
     } catch (error) {

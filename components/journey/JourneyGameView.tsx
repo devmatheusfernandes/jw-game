@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useJourney } from "@/hooks/useJourney";
 import { useSound } from "@/hooks/useSound";
 import { useHaptic } from "@/hooks/useHaptic";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import { triggerConfetti, triggerBadgeConfetti } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Question } from "@/types";
 import { Badge } from "@/types/journey";
 import { ComboIndicator } from "./ComboIndicator";
+import { HintComponent } from "./HintComponent";
 
 // Frases de Motivação (Acertos/Combo)
 const SUCCESS_MESSAGES = [
@@ -46,6 +48,7 @@ export function JourneyGameView({
 }: JourneyGameViewProps) {
   const router = useRouter();
   const { play } = useSound();
+  const { hintsEnabled } = usePreferences();
   const { saveProgress, finishDeck, progress, submitUserAnswer } = useJourney();
   const footerRef = useRef<HTMLDivElement>(null);
 
@@ -66,6 +69,9 @@ export function JourneyGameView({
   const [sessionScore, setSessionScore] = useState(0);
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [finalIsReplay, setFinalIsReplay] = useState(false);
+  const [unlockedHints, setUnlockedHints] = useState<Record<string, boolean>>({});
+  const [hintsCost, setHintsCost] = useState(0);
+
   // Safety check for empty questions or loading
   const currentQuestion = questions?.[currentIndex];
 
@@ -174,6 +180,20 @@ export function JourneyGameView({
     setIsCorrect(false);
   };
 
+  const handleUnlockHint = () => {
+    if (!currentQuestion) return;
+    
+    const cost = currentQuestion.referencePrice || 20;
+    // Verifica se tem saldo suficiente (sessionScore + pontos base do usuário se tivesse acesso ao backend)
+    // Como aqui estamos num fluxo isolado, vamos permitir deduzir do sessionScore mesmo que fique negativo temporariamente 
+    // ou apenas se tiver sessionScore suficiente. Para melhor UX, vamos permitir ficar negativo na sessão.
+    
+    setHintsCost(prev => prev + cost);
+    setSessionScore(prev => prev - cost); // Deduz imediatamente visualmente
+    setUnlockedHints(prev => ({...prev, [currentQuestion.id]: true}));
+    play("pop"); // Som de sucesso leve
+  };
+
   const handleFinish = async () => {
     // Snapshot: Salva se era replay ANTES de marcar como completo no banco
     setFinalIsReplay(isReplay);
@@ -207,6 +227,7 @@ export function JourneyGameView({
         totalQuestions={totalQuestions}
         isReplay={finalIsReplay}
         sessionScore={sessionScore}
+        hintsCost={hintsCost}
       />
     );
   }
@@ -259,6 +280,18 @@ export function JourneyGameView({
               {currentQuestion.text}
             </h2>
           </div>
+
+          {/* Hint Component */}
+          {hintsEnabled && currentQuestion.reference && (
+            <HintComponent
+                reference={currentQuestion.reference}
+                price={currentQuestion.referencePrice || 20}
+                source={currentQuestion.source}
+                isUnlocked={!!unlockedHints[currentQuestion.id]}
+                onUnlock={handleUnlockHint}
+                canAfford={true} // Pode implementar checagem de saldo global aqui se desejar
+            />
+          )}
 
           {/* Options Grid */}
           <div className="grid grid-cols-1 gap-3">
@@ -449,6 +482,7 @@ interface CompletionViewProps {
   totalQuestions: number;
   isReplay: boolean;
   sessionScore: number;
+  hintsCost: number;
 }
 
 function CompletionView({
@@ -459,6 +493,7 @@ function CompletionView({
   totalQuestions,
   isReplay,
   sessionScore,
+  hintsCost,
 }: CompletionViewProps) {
   const xpGained = isReplay ? 0 : sessionScore + 50; // Pontuação acumulada + 50 bônus de conclusão
   const accuracy = Math.round((correctCount / totalQuestions) * 100);
@@ -539,6 +574,16 @@ function CompletionView({
             </span>
           )}
         </div>
+        
+        {hintsCost > 0 && (
+          <div className="flex-1 bg-amber-50 dark:bg-amber-900/10 border-2 border-amber-100 dark:border-amber-900 rounded-xl p-3 flex flex-col items-center">
+            <span className="text-xs font-bold text-amber-400 uppercase">
+              Dicas
+            </span>
+            <span className="text-xl font-black text-amber-600">-{hintsCost}</span>
+          </div>
+        )}
+
         <div className="flex-1 bg-green-50 dark:bg-green-900/10 border-2 border-green-100 dark:border-green-900 rounded-xl p-3 flex flex-col items-center">
           <span className="text-xs font-bold text-green-400 uppercase">
             Acertos

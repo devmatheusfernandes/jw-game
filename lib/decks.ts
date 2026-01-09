@@ -1,6 +1,7 @@
 import { Question } from "@/types";
 import { db } from "./firebase";
 import { collection, getDocs, query, where, addDoc, doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
+import { removeUndefined } from "./utils";
 
 export interface Deck {
   id: string;
@@ -91,11 +92,13 @@ export async function getDeckById(deckId: string): Promise<Deck | undefined> {
 
 export async function saveDeck(deck: Omit<Deck, "id">, id?: string): Promise<string> {
   try {
+    const dataToSave = removeUndefined({ ...deck, createdAt: Date.now() });
+    
     if (id) {
-      await setDoc(doc(db, "decks", id), { ...deck, createdAt: Date.now() }, { merge: true });
+      await setDoc(doc(db, "decks", id), dataToSave, { merge: true });
       return id;
     } else {
-      const docRef = await addDoc(collection(db, "decks"), { ...deck, createdAt: Date.now() });
+      const docRef = await addDoc(collection(db, "decks"), dataToSave);
       return docRef.id;
     }
   } catch (error) {

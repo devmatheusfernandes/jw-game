@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Trash, Save, Loader2, Upload } from "lucide-react";
+import { removeUndefined } from "@/lib/utils";
 
 interface PageProps {
   params: Promise<{
@@ -52,12 +53,14 @@ export default function DeckEditorPage({ params }: PageProps) {
     if (!deck) return;
     setSaving(true);
     try {
-        await saveJourneyDeck({
+        const deckToSave = removeUndefined({
             ...deck,
             totalQuestions: deck.questions?.length || 0
-        }, deck.id);
+        });
+        await saveJourneyDeck(deckToSave, deck.id);
         toast.success("Deck salvo com sucesso!");
     } catch (error) {
+        console.error(error);
         toast.error("Erro ao salvar deck");
     } finally {
         setSaving(false);
@@ -117,9 +120,9 @@ export default function DeckEditorPage({ params }: PageProps) {
             options: item.options || [],
             correctAnswer: item.correctAnswer,
             timeLimit: item.timeLimit || 30,
-            reference: item.reference,
-            referencePrice: item.referencePrice,
-            source: item.source
+            reference: item.reference || "",
+            referencePrice: item.referencePrice || 20,
+            source: item.source || ""
         }));
 
         setDeck({

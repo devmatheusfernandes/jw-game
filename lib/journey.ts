@@ -5,6 +5,7 @@ import {
 } from "firebase/firestore";
 import { UserProgress, Deck, Stage, Badge } from "@/types/journey";
 import { BADGES } from "@/lib/journey-constants";
+import { removeUndefined } from "./utils";
 
 const COLLECTION_NAME = "user_journey";
 const STAGES_COLLECTION = "journey_stages";
@@ -69,15 +70,16 @@ export async function getJourneyDecks(stageId?: string): Promise<Deck[]> {
 
 export async function saveJourneyDeck(deck: Partial<Deck>, id?: string): Promise<void> {
     try {
+        const deckToSave = removeUndefined(deck);
         if (id) {
-            await setDoc(doc(db, DECKS_COLLECTION, id), deck, { merge: true });
+            await setDoc(doc(db, DECKS_COLLECTION, id), deckToSave, { merge: true });
         } else {
             const newDocRef = doc(collection(db, DECKS_COLLECTION));
             // const deckId = deck.id || newDocRef.id;
             if (deck.id) {
-                 await setDoc(doc(db, DECKS_COLLECTION, deck.id), { ...deck, id: deck.id });
+                 await setDoc(doc(db, DECKS_COLLECTION, deck.id), { ...deckToSave, id: deck.id });
             } else {
-                 await setDoc(newDocRef, { ...deck, id: newDocRef.id });
+                 await setDoc(newDocRef, { ...deckToSave, id: newDocRef.id });
             }
         }
     } catch (error) {

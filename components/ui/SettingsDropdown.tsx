@@ -1,17 +1,23 @@
 "use client";
 
 import * as React from "react";
-import { Settings, Volume2, VolumeX, Smartphone } from "lucide-react";
+import { Settings, Volume2, VolumeX, Smartphone, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useSound } from "@/hooks/useSound";
 import { useHapticContext } from "@/contexts/HapticContext";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
-export function SettingsDropdown() {
+interface SettingsDropdownProps {
+  showSeeAll?: boolean;
+}
+
+export function SettingsDropdown({ showSeeAll = false }: SettingsDropdownProps) {
   const { isMuted, toggleMute } = useSound();
   const { isEnabled: isHapticEnabled, toggleHaptic } = useHapticContext();
   const [isOpen, setIsOpen] = React.useState(false);
+
 
   // Close dropdown when clicking outside
   React.useEffect(() => {
@@ -90,6 +96,18 @@ export function SettingsDropdown() {
                     onCheckedChange={toggleHaptic}
                 />
             </div>
+
+            {showSeeAll && (
+              <div className="pt-2 mt-2 border-t border-zinc-100 dark:border-zinc-800">
+                <Link
+                  href="/dashboard/settings"
+                  className="flex items-center justify-between w-full p-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 rounded-lg transition-colors group"
+                >
+                  <span>Ver todas configurações</span>
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </div>
+            )}
         </div>
       )}
     </div>

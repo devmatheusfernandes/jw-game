@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getDeckById, saveDeck } from "@/lib/decks";
 import { getCategories, ensureCategories, Category } from "@/lib/categories";
 import { Question } from "@/types";
-import { generateUUID } from "@/lib/utils";
+import { generateUUID, removeUndefined } from "@/lib/utils";
 import { ArrowLeft, Plus, Save, Trash2, Clock, CheckCircle, X, ShieldAlert, Edit, Type, Check, Loader2, AlertTriangle, Layers, Upload, FileJson, Clipboard } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
@@ -234,27 +234,29 @@ export default function AdminDeckEditor() {
   }
 
   async function handleSaveDeck() {
-    if (!title) {
-      toast.error("Digite um título");
+    if (!title.trim()) {
+      toast.error("Digite um título para o deck");
       return;
     }
     if (questions.length === 0) {
       toast.error("Adicione pelo menos uma pergunta");
       return;
     }
-    if (!user) return;
 
     setSaving(true);
     try {
       await ensureCategories(selectedCategories, "global");
-      await saveDeck({
+
+      const deckData = removeUndefined({
         title,
         description,
         questions,
         ownerId: "global", 
         isGlobal: true,
         categories: selectedCategories
-      }, isNew ? undefined : deckId);
+      });
+
+      await saveDeck(deckData, isNew ? undefined : deckId);
       toast.success("Deck global salvo com sucesso!");
       router.push("/admin");
     } catch (error) {

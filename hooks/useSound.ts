@@ -1,6 +1,6 @@
 import { useSoundContext } from "@/contexts/SoundContext";
 
-type SoundEffect = 'correct' | 'wrong' | 'victory' | 'click' | 'countdown' | 'start';
+type SoundEffect = 'correct' | 'wrong' | 'victory' | 'click' | 'countdown' | 'start' | 'pop';
 
 const SOUND_PATHS: Record<SoundEffect, string> = {
   correct: '/sounds/correct.mp3',
@@ -9,6 +9,7 @@ const SOUND_PATHS: Record<SoundEffect, string> = {
   click: '/sounds/click.mp3',
   countdown: '/sounds/countdown.mp3',
   start: '/sounds/start.mp3',
+  pop: '/sounds/pop.mp3',
 };
 
 export function useSound() {

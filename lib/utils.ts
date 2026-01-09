@@ -13,3 +13,25 @@ export function generateRoomCode(): string {
 export function generateUUID(): string {
   return crypto.randomUUID();
 }
+
+/**
+ * Remove recursively keys with undefined values from an object or array.
+ * Firestore throws error if a field is undefined.
+ */
+export function removeUndefined(obj: any): any {
+  if (obj === undefined) {
+    return null;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(removeUndefined);
+  }
+  if (obj !== null && typeof obj === 'object') {
+    return Object.entries(obj).reduce((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = removeUndefined(value);
+      }
+      return acc;
+    }, {} as any);
+  }
+  return obj;
+}

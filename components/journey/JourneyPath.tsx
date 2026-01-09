@@ -196,11 +196,6 @@ function CurvedPathSVG({ count, startIndex, isLocked }: { count: number, startIn
   const pathData = useMemo(() => {
     if (count <= 1) return "";
     
-    let d = "";
-    const centerX = 50; // Usando porcentagem ou viewBox relativo seria ideal, mas px funciona bem com container fixo
-    // Vamos assumir que o SVG cobre 100% da largura do pai (max-w-md = aprox 448px, metade ~224)
-    // Para simplificar o SVG, vamos usar coordenadas relativas ao centro do container visual (offset via CSS left/right não é necessário se o SVG for width 100%)
-    
     // Nota: O SVG precisa ter um sistema de coordenadas que bata com o CSS translate.
     // O translate CSS move a div a partir do centro. 
     // O SVG desenha linhas.

@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Lock, Check, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useJourney } from "@/hooks/useJourney";
 import { Deck } from "@/types/journey";
-import { Skeleton } from "@/components/ui/skeleton"; // Certifique-se de ter este componente ou use a div fallback abaixo
+import { Skeleton } from "@/components/ui/skeleton";
 
 // --- Configurações Visuais da Jornada ---
 const X_AMPLITUDE = 60; // Largura da curva (px)
@@ -16,6 +16,39 @@ const Y_SPACING = 100; // Altura entre níveis (px)
 export function JourneyPath() {
   const { stages, getStageDecks, progress, isStageLocked, isDeckLocked, loading } = useJourney();
   const router = useRouter();
+
+  // Encontrar o próximo deck jogável (primeiro desbloqueado e não concluído) para o tooltip e scroll
+  const nextActiveDeckId = useMemo(() => {
+    if (loading) return null;
+    for (const stage of stages) {
+      if (isStageLocked(stage.id)) continue;
+      
+      const stageDecks = getStageDecks(stage.id);
+      for (const deck of stageDecks) {
+        const isCompleted = progress?.completedDecks.includes(deck.id);
+        const isLocked = isDeckLocked(deck);
+        
+        if (!isLocked && !isCompleted) {
+          return deck.id;
+        }
+      }
+    }
+    return null;
+  }, [stages, getStageDecks, progress, isStageLocked, isDeckLocked, loading]);
+
+  // Scroll automático para o próximo deck ao carregar
+  useEffect(() => {
+    if (nextActiveDeckId) {
+      // Timeout para garantir que o DOM foi renderizado completamente
+      const timer = setTimeout(() => {
+        const element = document.getElementById(`deck-node-${nextActiveDeckId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [nextActiveDeckId]);
 
   // Exibe o Skeleton mantendo o formato da curva
   if (loading) {
@@ -45,11 +78,11 @@ export function JourneyPath() {
               className={cn(
                 "w-full text-center mb-8 p-5 rounded-2xl border-b-4 transition-all relative z-20",
                 locked
-                  ? "bg-zinc-100 dark:bg-zinc-900 border-zinc-200 text-zinc-400"
+                  ? "bg-zinc-200 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-400"
                   : `${stage.color} border-black/20 text-white shadow-xl`
               )}
             >
-              <h2 className="text-xl font-extrabold tracking-tight uppercase drop-shadow-sm">
+              <h2 className="text-xl font-extrabold tracking-tight uppercase">
                 {stage.title}
               </h2>
               <p className={cn("text-xs sm:text-sm font-medium opacity-90", locked ? "text-zinc-400" : "text-white")}>
@@ -73,6 +106,7 @@ export function JourneyPath() {
                 const isCompleted = progress?.completedDecks.includes(deck.id);
                 const isLocked = isDeckLocked(deck);
                 const isActive = !isLocked && !isCompleted;
+                const isNext = deck.id === nextActiveDeckId;
                 
                 // Cálculo da posição X (Onda Senoidal)
                 const xOffset = Math.sin(actualIndex * 2.5) * X_AMPLITUDE;
@@ -80,7 +114,7 @@ export function JourneyPath() {
                 return (
                   <div
                     key={deck.id}
-                    className="absolute left-0 right-0 flex justify-center"
+                    className="absolute left-0 right-0 flex justify-center z-20"
                     style={{ 
                       top: index * Y_SPACING,
                       transform: `translateX(${xOffset}px)`
@@ -91,6 +125,8 @@ export function JourneyPath() {
                       isCompleted={!!isCompleted}
                       isLocked={!!isLocked}
                       isActive={isActive}
+                      showTooltip={isNext}
+                      domId={`deck-node-${deck.id}`}
                       color={stage.color}
                       onClick={() => {
                         if (!isLocked) router.push(`/journey/play/${deck.id}`);
@@ -229,11 +265,13 @@ interface DeckNodeProps {
   isCompleted: boolean;
   isLocked: boolean;
   isActive: boolean;
+  showTooltip: boolean;
+  domId?: string;
   color: string;
   onClick: () => void;
 }
 
-function DeckNode({ isCompleted, isLocked, isActive, color, onClick }: DeckNodeProps) {
+function DeckNode({ isCompleted, isLocked, isActive, showTooltip, domId, color, onClick }: DeckNodeProps) {
   // Define as cores dinamicamente
   const bgClass = isLocked 
     ? "bg-zinc-200 dark:bg-zinc-800" 
@@ -244,20 +282,20 @@ function DeckNode({ isCompleted, isLocked, isActive, color, onClick }: DeckNodeP
   const borderClass = isLocked
     ? "border-zinc-300 dark:border-zinc-700"
     : isCompleted
-      ? "border-amber-600"
-      : "border-black/20"; // Borda escurecida genérica funciona bem para cores vivas
+      ? "border-amber-600 dark:drop-shadow-[0_6px_18px_rgba(255,191,0,0.5)] "
+      : `border-black/20`; // Borda escurecida genérica funciona bem para cores vivas
 
   const textClass = isLocked ? "text-zinc-400" : "text-white";
 
   return (
-    <div className="relative flex flex-col items-center group">
+    <div id={domId} className="relative flex flex-col items-center group">
       {/* Tooltip "COMEÇAR" Flutuante */}
-      {isActive && (
+      {showTooltip && (
         <motion.div
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          className="absolute -top-14 z-99 pointer-events-none"
+          className="absolute -top-14 z-40 pointer-events-none"
         >
           <div className="bg-white dark:bg-zinc-800 text-zinc-800 dark:text-white px-3 py-1.5 rounded-xl font-bold text-sm shadow-xl border-2 border-zinc-100 dark:border-zinc-700 whitespace-nowrap uppercase tracking-wider">
             Começar
@@ -275,7 +313,7 @@ function DeckNode({ isCompleted, isLocked, isActive, color, onClick }: DeckNodeP
         whileTap={!isLocked ? { scale: 0.95, translateY: 4 } : {}}
         className={cn(
           "w-20 h-20 rounded-[1.8rem] flex items-center justify-center text-3xl shadow-sm relative z-10 transition-colors",
-          "border-b-[6px] active:border-b-0 active:translate-y-[6px]", // Lógica visual 3D
+          (isCompleted || isLocked) && "border-b-[6px] active:border-b-0 active:translate-y-[6px]", // 3D visual only for completed or locked
           bgClass,
           borderClass,
           textClass,

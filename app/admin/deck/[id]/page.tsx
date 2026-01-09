@@ -43,6 +43,7 @@ export default function AdminDeckEditor() {
   const [qTime, setQTime] = useState(30);
   const [qReference, setQReference] = useState("");
   const [qReferencePrice, setQReferencePrice] = useState(20);
+  const [qSource, setQSource] = useState("");
 
   // JSON Import Modal State
   const [isJsonModalOpen, setIsJsonModalOpen] = useState(false);
@@ -105,6 +106,7 @@ export default function AdminDeckEditor() {
       timeLimit: qTime,
       reference: qReference || undefined,
       referencePrice: qReference ? qReferencePrice : undefined,
+      source: qSource || undefined,
       ...(qType === "multiple_choice" ? { options: qOptions } : {})
     };
 
@@ -130,6 +132,7 @@ export default function AdminDeckEditor() {
     setQTime(q.timeLimit ?? 30);
     setQReference(q.reference || "");
     setQReferencePrice(q.referencePrice || 20);
+    setQSource(q.source || "");
     // Scroll suave para o editor
     window.scrollTo({ top: 200, behavior: 'smooth' });
   }
@@ -150,6 +153,7 @@ export default function AdminDeckEditor() {
     setQTime(30);
     setQReference("");
     setQReferencePrice(20);
+    setQSource("");
   }
 
   function importQuestionsFromData(json: any) {
@@ -180,10 +184,11 @@ export default function AdminDeckEditor() {
          options: item.options || [],
          correctAnswer: item.correctAnswer,
          timeLimit: item.timeLimit || 30,
-         reference: item.reference,
-         referencePrice: item.referencePrice
-       });
-    });
+          reference: item.reference,
+          referencePrice: item.referencePrice,
+          source: item.source
+        });
+     });
 
     if (newQuestions.length > 0) {
         setQuestions(prev => [...prev, ...newQuestions]);
@@ -492,6 +497,17 @@ export default function AdminDeckEditor() {
                         disabled={!qReference}
                     />
                 </div>
+            </div>
+
+            <div>
+                <label className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400 ml-1">Fonte (Opcional)</label>
+                <input
+                    type="text"
+                    value={qSource}
+                    onChange={e => setQSource(e.target.value)}
+                    className="w-full h-12 px-4 mt-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none font-medium"
+                    placeholder="Ex: Enciclopédia Bíblica, Vol 2, pág 150"
+                />
             </div>
 
             <div className="p-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex">

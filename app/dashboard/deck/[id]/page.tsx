@@ -43,6 +43,7 @@ export default function DeckEditor() {
   const [qTime, setQTime] = useState(30);
   const [qReference, setQReference] = useState("");
   const [qReferencePrice, setQReferencePrice] = useState(20);
+  const [qSource, setQSource] = useState("");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -111,6 +112,7 @@ export default function DeckEditor() {
       timeLimit: qTime,
       reference: qReference || undefined,
       referencePrice: qReference ? qReferencePrice : undefined,
+      source: qSource || undefined,
       ...(qType === "multiple_choice" ? { options: qOptions } : {})
     };
 
@@ -136,6 +138,7 @@ export default function DeckEditor() {
     setQTime(q.timeLimit ?? 30);
     setQReference(q.reference || "");
     setQReferencePrice(q.referencePrice || 20);
+    setQSource(q.source || "");
     
     // Scroll to editor
     window.scrollTo({ top: 200, behavior: 'smooth' });
@@ -157,6 +160,7 @@ export default function DeckEditor() {
     setQTime(30);
     setQReference("");
     setQReferencePrice(20);
+    setQSource("");
   }
 
   async function handleSaveDeck() {
@@ -413,6 +417,17 @@ export default function DeckEditor() {
                         disabled={!qReference}
                     />
                 </div>
+            </div>
+
+            <div>
+                <label className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400 ml-1">Fonte (Opcional)</label>
+                <input
+                    type="text"
+                    value={qSource}
+                    onChange={e => setQSource(e.target.value)}
+                    className="w-full h-12 px-4 mt-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none font-medium"
+                    placeholder="Ex: Enciclopédia Bíblica, Vol 2, pág 150"
+                />
             </div>
 
             {/* Selector de Tipo */}

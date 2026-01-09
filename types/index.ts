@@ -22,6 +22,7 @@ export interface Question {
   timeLimit?: number; // Specific time limit for this question in seconds
   reference?: string;
   referencePrice?: number;
+  source?: string;
 }
 
 export interface GameSettings {

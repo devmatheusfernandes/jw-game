@@ -73,7 +73,8 @@ export default function DeckEditorPage({ params }: PageProps) {
         options: ["Opção 1", "Opção 2"],
         correctAnswer: "Opção 1",
         reference: "",
-        referencePrice: 20
+        referencePrice: 20,
+        source: ""
     };
     setDeck({
         ...deck,
@@ -117,7 +118,8 @@ export default function DeckEditorPage({ params }: PageProps) {
             correctAnswer: item.correctAnswer,
             timeLimit: item.timeLimit || 30,
             reference: item.reference,
-            referencePrice: item.referencePrice
+            referencePrice: item.referencePrice,
+            source: item.source
         }));
 
         setDeck({
@@ -266,6 +268,13 @@ export default function DeckEditorPage({ params }: PageProps) {
                                             />
                                         </div>
                                     </div>
+                                    
+                                    <input 
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                        value={q.source || ""}
+                                        onChange={e => updateQuestion(idx, { source: e.target.value })}
+                                        placeholder="Fonte (Opcional) - ex: Enciclopédia Vol 1"
+                                    />
 
                                     {/* Options Logic */}
                                     {q.type === 'multiple_choice' ? (

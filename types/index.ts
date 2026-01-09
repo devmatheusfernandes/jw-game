@@ -20,6 +20,8 @@ export interface Question {
   options?: string[]; // For multiple choice
   correctAnswer: string | boolean;
   timeLimit?: number; // Specific time limit for this question in seconds
+  reference?: string;
+  referencePrice?: number;
 }
 
 export interface GameSettings {

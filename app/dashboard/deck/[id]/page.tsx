@@ -41,6 +41,8 @@ export default function DeckEditor() {
   const [qOptions, setQOptions] = useState(["", "", "", ""]);
   const [qCorrect, setQCorrect] = useState(""); 
   const [qTime, setQTime] = useState(30);
+  const [qReference, setQReference] = useState("");
+  const [qReferencePrice, setQReferencePrice] = useState(20);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -107,6 +109,8 @@ export default function DeckEditor() {
       type: qType,
       correctAnswer: qType === "multiple_choice" ? qCorrect : (qCorrect === "true"),
       timeLimit: qTime,
+      reference: qReference || undefined,
+      referencePrice: qReference ? qReferencePrice : undefined,
       ...(qType === "multiple_choice" ? { options: qOptions } : {})
     };
 
@@ -130,6 +134,8 @@ export default function DeckEditor() {
         setQCorrect(String(q.correctAnswer));
     }
     setQTime(q.timeLimit ?? 30);
+    setQReference(q.reference || "");
+    setQReferencePrice(q.referencePrice || 20);
     
     // Scroll to editor
     window.scrollTo({ top: 200, behavior: 'smooth' });
@@ -149,6 +155,8 @@ export default function DeckEditor() {
     setQOptions(["", "", "", ""]);
     setQCorrect("");
     setQTime(30);
+    setQReference("");
+    setQReferencePrice(20);
   }
 
   async function handleSaveDeck() {
@@ -377,6 +385,32 @@ export default function DeckEditor() {
                         value={qTime}
                         onChange={e => setQTime(Number(e.target.value))}
                         className="w-full h-12 px-4 mt-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-center font-mono font-bold"
+                    />
+                </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-[1fr_150px]">
+                <div>
+                    <label className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400 ml-1">Referência / Dica (Opcional)</label>
+                    <input
+                        type="text"
+                        value={qReference}
+                        onChange={e => setQReference(e.target.value)}
+                        className="w-full h-12 px-4 mt-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none font-medium"
+                        placeholder="Ex: João 3:16"
+                    />
+                </div>
+                <div>
+                    <label className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400 ml-1 flex items-center gap-1">
+                        Preço (Pontos)
+                    </label>
+                    <input
+                        type="number"
+                        min="0"
+                        value={qReferencePrice}
+                        onChange={e => setQReferencePrice(Number(e.target.value))}
+                        className="w-full h-12 px-4 mt-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-center font-mono font-bold"
+                        disabled={!qReference}
                     />
                 </div>
             </div>

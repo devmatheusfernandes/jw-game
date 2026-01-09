@@ -71,7 +71,9 @@ export default function DeckEditorPage({ params }: PageProps) {
         text: "",
         type: "multiple_choice",
         options: ["Opção 1", "Opção 2"],
-        correctAnswer: "Opção 1"
+        correctAnswer: "Opção 1",
+        reference: "",
+        referencePrice: 20
     };
     setDeck({
         ...deck,
@@ -113,7 +115,9 @@ export default function DeckEditorPage({ params }: PageProps) {
             type: item.type || "multiple_choice",
             options: item.options || [],
             correctAnswer: item.correctAnswer,
-            timeLimit: item.timeLimit || 30
+            timeLimit: item.timeLimit || 30,
+            reference: item.reference,
+            referencePrice: item.referencePrice
         }));
 
         setDeck({
@@ -233,6 +237,34 @@ export default function DeckEditorPage({ params }: PageProps) {
                                             <option value="multiple_choice">Múltipla Escolha</option>
                                             <option value="true_false">Verdadeiro / Falso</option>
                                         </select>
+                                        <input 
+                                            type="number"
+                                            className="w-24 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                            placeholder="Tempo (s)"
+                                            value={q.timeLimit || 30}
+                                            onChange={e => updateQuestion(idx, { timeLimit: parseInt(e.target.value) })}
+                                            title="Tempo limite em segundos"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-[1fr_150px] gap-4">
+                                        <input 
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                            value={q.reference || ""}
+                                            onChange={e => updateQuestion(idx, { reference: e.target.value })}
+                                            placeholder="Referência / Dica (Opcional)"
+                                        />
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-bold text-zinc-500">Preço:</span>
+                                            <input 
+                                                type="number"
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                value={q.referencePrice || 20}
+                                                onChange={e => updateQuestion(idx, { referencePrice: parseInt(e.target.value) })}
+                                                placeholder="20"
+                                                disabled={!q.reference}
+                                            />
+                                        </div>
                                     </div>
 
                                     {/* Options Logic */}
